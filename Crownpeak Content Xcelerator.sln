@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThirdPartyDLL", "ThirdPartyDLL", "{63CDBE8D-2A33-4E20-9D52-372275A42757}"
 	ProjectSection(SolutionItems) = preProject
 		3rdPartyDll\AccessApiHelper.dll = 3rdPartyDll\AccessApiHelper.dll
+		3rdPartyDll\Newtonsoft.Json.dll = 3rdPartyDll\Newtonsoft.Json.dll
 	EndProjectSection
 EndProject
 Global

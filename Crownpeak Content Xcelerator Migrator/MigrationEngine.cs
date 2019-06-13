@@ -126,7 +126,14 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			xml.AppendChild(xml.CreateProcessingInstruction("xml", "version=\"1.0\""));
 
 			var assetsXml = xml.CreateElement("assets");
+			var attribute = xml.CreateAttribute("xmlns:xsi");
+			attribute.Value = "http://www.w3.org/2001/XMLSchema-instance";
+			assetsXml.Attributes.Append(attribute);
+			attribute = xml.CreateAttribute("xsi", "noNamespaceSchemaLocation", "http://www.w3.org/2001/XMLSchema-instance");
+			attribute.Value = "https://raw.githubusercontent.com/Crownpeak/Content-Xcelerator/master/Crownpeak%20Content%20Xcelerator%20Migrator/Content-Xcelerator.xsd";
+			assetsXml.Attributes.Append(attribute);
 			xml.AppendChild(assetsXml);
+
 			var i = 1;
 			var worklistAssets = assetCollection as WorklistAsset[] ?? assetCollection.ToArray();
 			var total = worklistAssets.Count();
@@ -1083,13 +1090,13 @@ namespace Crownpeak.ContentXcelerator.Migrator
 								TaskSubject = GetNodeStringValue(stepNode.SelectSingleNode("taskSubject")) ?? "",
 								TaskDescription = GetNodeStringValue(stepNode.SelectSingleNode("taskDescription")) ?? "",
 								Status = importSession.StateMaps[GetNodeStringValue(stepNode.SelectSingleNode("statusName"))],
-								SetAsDeleted = GetNodeStringValue(stepNode.SelectSingleNode("setAsDeleted")) == "True",
-								SetAsHidden = GetNodeStringValue(stepNode.SelectSingleNode("setAsHidden")) == "True",
+								SetAsDeleted = GetNodeStringValue(stepNode.SelectSingleNode("setAsDeleted")) == "true",
+								SetAsHidden = GetNodeStringValue(stepNode.SelectSingleNode("setAsHidden")) == "true",
 								ConflictStep = GetNodeIntValue(stepNode.SelectSingleNode("conflictStep")),
 								BranchStep = GetNodeIntValue(stepNode.SelectSingleNode("branchStep")),
-								PublishState = GetNodeStringValue(stepNode.SelectSingleNode("publishState")) == "True",
-								InMenu = GetNodeStringValue(stepNode.SelectSingleNode("inMenu")) == "True",
-								UseDqm = GetNodeStringValue(stepNode.SelectSingleNode("useDqm")) == "True",
+								PublishState = GetNodeStringValue(stepNode.SelectSingleNode("publishState")) == "true",
+								InMenu = GetNodeStringValue(stepNode.SelectSingleNode("inMenu")) == "true",
+								UseDqm = GetNodeStringValue(stepNode.SelectSingleNode("useDqm")) == "true",
 								DqmCheckType = 0,
 								DqmPercentage = 0,
 								AfterHours = GetNodeIntValue(stepNode.SelectSingleNode("afterHours")),
@@ -1111,14 +1118,14 @@ namespace Crownpeak.ContentXcelerator.Migrator
 									FilterId = GetNodeStringValue(commandNode.SelectSingleNode("filterName")) != null
 										? importSession.WorkflowFilterMaps[GetNodeStringValue(commandNode.SelectSingleNode("filterName"))]
 										: 0,
-									RequestComment = GetNodeStringValue(commandNode.SelectSingleNode("requestComment")) == "True",
-									InSummary = GetNodeStringValue(commandNode.SelectSingleNode("inSummary")) == "True",
-									QueueCommand = GetNodeStringValue(commandNode.SelectSingleNode("queueCommand")) == "True",
-									EnforceSpellcheck = GetNodeStringValue(commandNode.SelectSingleNode("enforceSpellcheck")) == "True",
-									EnforceEdit = GetNodeStringValue(commandNode.SelectSingleNode("enforceEdit")) == "True",
-									EnforceSchedule = GetNodeStringValue(commandNode.SelectSingleNode("enforceSchedule")) == "True",
-									VerifyCommand = GetNodeStringValue(commandNode.SelectSingleNode("verifyCommand")) == "True",
-									InEdit = GetNodeStringValue(commandNode.SelectSingleNode("inEdit")) == "True"
+									RequestComment = GetNodeStringValue(commandNode.SelectSingleNode("requestComment")) == "true",
+									InSummary = GetNodeStringValue(commandNode.SelectSingleNode("inSummary")) == "true",
+									QueueCommand = GetNodeStringValue(commandNode.SelectSingleNode("queueCommand")) == "true",
+									EnforceSpellcheck = GetNodeStringValue(commandNode.SelectSingleNode("enforceSpellcheck")) == "true",
+									EnforceEdit = GetNodeStringValue(commandNode.SelectSingleNode("enforceEdit")) == "true",
+									EnforceSchedule = GetNodeStringValue(commandNode.SelectSingleNode("enforceSchedule")) == "true",
+									VerifyCommand = GetNodeStringValue(commandNode.SelectSingleNode("verifyCommand")) == "true",
+									InEdit = GetNodeStringValue(commandNode.SelectSingleNode("inEdit")) == "true"
 								};
 								commands.Add(command);
 							}

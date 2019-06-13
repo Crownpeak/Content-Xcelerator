@@ -18,7 +18,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			if (node.OwnerDocument == null) return null;
 
 			var element = node.AppendChild(node.OwnerDocument.CreateElement(name));
-			element.InnerText = value.ToString();
+			element.InnerText = value is bool ? value.ToString().ToLowerInvariant() : value.ToString();
 			return element;
 		}
 	}

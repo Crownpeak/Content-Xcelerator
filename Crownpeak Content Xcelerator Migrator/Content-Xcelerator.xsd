@@ -1,0 +1,229 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	
+	<xsd:element name="assets" type="AssetsType"/>
+
+	<xsd:complexType name="AssetsType">
+		<xsd:sequence maxOccurs="unbounded">
+			<xsd:choice>
+				<xsd:element name="folder" type="FolderType"/>
+				<xsd:element name="asset" type="AssetType"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="AssetType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:integer"/>
+			<xsd:element name="label" type="xsd:string"/>
+			<xsd:element name="template_id" type="xsd:integer"/>
+			<xsd:element name="template_path" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="template_language" type="xsd:integer"/>
+			<xsd:element name="model_id" type="IntegerOrNull"/>
+			<xsd:element name="is_deleted" type="xsd:boolean"/>
+			<xsd:element name="is_hidden" type="xsd:boolean"/>
+			<xsd:element name="workflow_id" type="IntegerOrNull"/>
+			<xsd:element name="workflow_name" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="status" type="xsd:integer"/>
+			<xsd:element name="status_name" type="xsd:string"/>
+			<xsd:element name="path" type="xsd:string"/>
+			<xsd:element name="folder_id" type="xsd:integer"/>
+			<xsd:element name="subType" type="IntegerOrNull"/>
+			<xsd:element name="templateSubType" type="IntegerOrNull"/>
+			<xsd:element name="intendedType" type="xsd:string"/>
+			<xsd:element name="type" type="xsd:integer"/>
+			<xsd:element name="publishing_properties" type="PublishingPropertiesType" minOccurs="0"/>
+			<xsd:element name="branch_id" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="fields" type="FieldsType"/>
+			<xsd:element name="binaryContent" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="workflow" type="WorkflowType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="FolderType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:integer"/>
+			<xsd:element name="label" type="xsd:string"/>
+			<xsd:element name="model_id" type="IntegerOrNull"/>
+			<xsd:element name="model_path" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="is_deleted" type="xsd:boolean"/>
+			<xsd:element name="is_hidden" type="xsd:boolean"/>
+			<xsd:element name="path" type="xsd:string"/>
+			<xsd:element name="folder_id" type="xsd:integer"/>
+			<xsd:element name="subType" type="IntegerOrNull"/>
+			<xsd:element name="templateSubType" type="IntegerOrNull"/>
+			<xsd:element name="intendedType" type="xsd:string"/>
+			<xsd:element name="type" type="xsd:integer"/>
+			<xsd:element name="folder_type" type="FolderTypeType" minOccurs="0"/>
+			<xsd:element name="publishing_properties" type="PublishingPropertiesType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WorkflowType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:integer"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="description" type="xsd:string"/>
+			<xsd:element name="steps" type="StepsType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="StepsType">
+		<xsd:sequence>
+			<xsd:element name="step" type="StepType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="StepType">
+		<xsd:sequence>
+			<xsd:element name="execFilePath" type="xsd:string"/>
+			<xsd:element name="accessFile" type="xsd:string"/>
+			<xsd:element name="emailFilePath" type="xsd:string"/>
+			<xsd:element name="commands" type="CommandsType"/>
+			<xsd:element name="publishes" type="PublishesType"/>
+			<xsd:element name="schedules" type="SchedulesType" minOccurs="0"/>
+			<xsd:element name="actions" type="ActionsType" minOccurs="0"/>
+			<xsd:element name="step" type="xsd:integer"/>
+			<xsd:element name="taskSubject" type="xsd:string"/>
+			<xsd:element name="taskDescription" type="xsd:string"/>
+			<xsd:element name="status" type="xsd:integer"/>
+			<xsd:element name="statusName" type="xsd:string"/>
+			<xsd:element name="setAsDeleted" type="xsd:boolean"/>
+			<xsd:element name="setAsHidden" type="xsd:boolean"/>
+			<xsd:element name="publishState" type="xsd:boolean"/>
+			<xsd:element name="conflictStep" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="branchStep" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="afterHours" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="afterGoto" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="inMenu" type="xsd:boolean"/>
+			<xsd:element name="useDqm" type="xsd:boolean"/>
+			<xsd:element name="dqmCheckType" type="xsd:integer" minOccurs="0"/>
+			<xsd:element name="dqmPercentage" type="xsd:integer" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="ActionsType">
+		<xsd:sequence>
+			<xsd:element name="action" type="ActionType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="ActionType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:integer"/>
+			<xsd:element name="dest" type="xsd:integer"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="PublishesType">
+		<xsd:sequence>
+			<xsd:element name="publish" type="PublishType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="PublishType">
+		<xsd:sequence>
+			<xsd:element name="packageId" type="xsd:integer"/>
+			<xsd:element name="packageName" type="xsd:string"/>
+			<xsd:element name="status" type="xsd:integer"/>
+			<xsd:element name="statusName" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="SchedulesType">
+		<xsd:sequence>
+			<xsd:element name="schedule" type="ScheduleType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="ScheduleType">
+		<xsd:sequence>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="dest" type="xsd:integer"/>
+			<xsd:element name="offset" type="xsd:integer"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="CommandsType">
+		<xsd:sequence>
+			<xsd:element name="command" type="CommandType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="CommandType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:integer"/>
+			<xsd:element name="command" type="xsd:string"/>
+			<xsd:element name="commandDest" type="xsd:integer"/>
+			<xsd:element name="commandId" type="xsd:integer"/>
+			<xsd:element name="filterId" type="xsd:integer"/>
+			<xsd:element name="filterName" type="xsd:string" minOccurs="0"/>
+			<xsd:element name="requestComment" type="xsd:boolean"/>
+			<xsd:element name="inSummary" type="xsd:boolean"/>
+			<xsd:element name="queueCommand" type="xsd:boolean"/>
+			<xsd:element name="enforceSpellcheck" type="xsd:boolean"/>
+			<xsd:element name="enforceEdit" type="xsd:boolean"/>
+			<xsd:element name="enforceSchedule" type="xsd:boolean"/>
+			<xsd:element name="verifyCommand" type="xsd:boolean"/>
+			<xsd:element name="inEdit" type="xsd:boolean"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="FieldsType">
+		<xsd:sequence>
+			<xsd:element name="field" type="FieldType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="FieldType">
+		<xsd:sequence>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="value" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="PublishingPropertiesType">
+		<xsd:sequence>
+			<xsd:element name="property" type="PublishingPropertyType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="PublishingPropertyType">
+		<xsd:sequence>
+			<xsd:element name="package" type="xsd:string"/>
+			<xsd:element name="type" type="PublishingPropertyTypeType"/>
+			<xsd:element name="filepath" type="xsd:string"/>
+			<xsd:element name="filename" type="xsd:string"/>
+			<xsd:element name="extension" type="xsd:string"/>
+			<xsd:element name="layout" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:simpleType name="PublishingPropertyTypeType">
+		<xsd:restriction base="xsd:normalizedString">
+			<xsd:enumeration value="Templated"/>
+			<xsd:enumeration value="Digital"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="FolderTypeType">
+		<xsd:restriction base="xsd:normalizedString">
+			<xsd:enumeration value="GreenFolder"/>
+			<xsd:enumeration value="PurpleFolder"/>
+			<xsd:enumeration value="RedFolder"/>
+			<xsd:enumeration value="YellowFolder"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="IntegerOrNull">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\d*|\s*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="ZeroOrNull">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="0|\s*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+
+</xsd:schema>
