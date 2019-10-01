@@ -1,5 +1,5 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
-	
+
 	<xsd:element name="assets" type="AssetsType"/>
 
 	<xsd:complexType name="AssetsType">
@@ -7,10 +7,15 @@
 			<xsd:choice>
 				<xsd:element name="folder" type="FolderType"/>
 				<xsd:element name="asset" type="AssetType"/>
+				<xsd:element name="snippet" type="WcoSnippetType"/>
+				<xsd:element name="targetGroup" type="WcoTargetGroupType"/>
+				<xsd:element name="field" type="WcoFieldType"/>
+				<xsd:element name="form" type="WcoFormType"/>
+				<xsd:element name="connector" type="WcoConnectorType"/>
 			</xsd:choice>
 		</xsd:sequence>
 	</xsd:complexType>
-	
+
 	<xsd:complexType name="AssetType">
 		<xsd:sequence>
 			<xsd:element name="id" type="xsd:integer"/>
@@ -55,6 +60,136 @@
 			<xsd:element name="type" type="xsd:integer"/>
 			<xsd:element name="folder_type" type="FolderTypeType" minOccurs="0"/>
 			<xsd:element name="publishing_properties" type="PublishingPropertiesType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoSnippetType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="hasTestingVariant" type="xsd:boolean"/>
+			<xsd:element name="hasTargetingVariant" type="xsd:boolean"/>
+			<xsd:element name="variants" type="WcoVariantsType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoTargetGroupType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="rules" type="WcoRulesType" minOccurs="0"/>
+			<xsd:element name="behavioralRules" type="WcoBehavioralRulesType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoFieldType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="label" type="xsd:string"/>
+			<xsd:element name="maxLength" type="xsd:integer"/>
+			<xsd:element name="initialValue" type="xsd:string"/>
+			<xsd:element name="required" type="xsd:boolean"/>
+			<xsd:element name="type" type="xsd:string"/>
+			<xsd:element name="values" type="WcoValuesType" minOccurs="0"/>
+			<xsd:element name="placeholder" type="xsd:string"/>
+			<xsd:element name="validPattern" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoFormType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="secure" type="xsd:boolean"/>
+			<xsd:element name="doNotStoreSubmissionData" type="xsd:boolean"/>
+			<xsd:element name="validateEmailRecipientsAgainstWhiteList" type="xsd:boolean"/>
+			<xsd:element name="formElements" type="WcoFormElementsType" minOccurs="0"/>
+			<xsd:element name="hiddenFields" type="WcoFieldsType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoConnectorType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="type" type="xsd:integer"/>
+			<xsd:element name="url" type="xsd:string"/>
+			<xsd:element name="fields" type="WcoFieldsType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoFieldsType">
+		<xsd:sequence>
+			<xsd:element name="field" type="WcoValueType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoFormElementsType">
+		<xsd:sequence>
+			<xsd:element name="element" type="WcoValueType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoValuesType">
+		<xsd:sequence>
+			<xsd:element name="value" type="WcoValueType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoValueType">
+		<xsd:sequence>
+			<xsd:element name="key" type="xsd:string"/>
+			<xsd:element name="value" type="xsd:string"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoRulesType">
+		<xsd:sequence>
+			<xsd:element name="rule" type="WcoRuleType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoRuleType">
+		<xsd:sequence>
+			<xsd:element name="fieldId" type="xsd:string"/>
+			<xsd:element name="op" type="WcoRuleOpType"/>
+			<xsd:element name="value" type="xsd:string"/>
+			<xsd:element name="order" type="xsd:integer"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoBehavioralRulesType">
+		<xsd:sequence>
+			<xsd:element name="rule" type="WcoBehavioralRuleType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoBehavioralRuleType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="ruleType" type="WcoBehavioralRuleTypeType"/>
+			<xsd:element name="data" type="xsd:string"/>
+			<xsd:element name="referrer" type="xsd:string"/>
+			<xsd:element name="threshold" type="xsd:integer"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoVariantsType">
+		<xsd:sequence>
+			<xsd:element name="variant" type="WcoVariantType" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="WcoVariantType">
+		<xsd:sequence>
+			<xsd:element name="id" type="xsd:string"/>
+			<xsd:element name="name" type="xsd:string"/>
+			<xsd:element name="order" type="xsd:integer"/>
+			<xsd:element name="weight" type="xsd:integer"/>
+			<xsd:element name="snippetVariant" type="xsd:integer"/>
+			<xsd:element name="targetGroupId" type="xsd:string"/>
+			<xsd:element name="content" type="xsd:string"/>
 		</xsd:sequence>
 	</xsd:complexType>
 
@@ -211,6 +346,33 @@
 			<xsd:enumeration value="PurpleFolder"/>
 			<xsd:enumeration value="RedFolder"/>
 			<xsd:enumeration value="YellowFolder"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="WcoRuleOpType">
+		<xsd:restriction base="xsd:normalizedString">
+			<xsd:enumeration value="Is"/>
+			<xsd:enumeration value="IsNot"/>
+			<xsd:enumeration value="Contains"/>
+			<xsd:enumeration value="DoesNotContain"/>
+			<xsd:enumeration value="StartWith"/>
+			<xsd:enumeration value="EndsWith"/>
+			<xsd:enumeration value="GreaterThan"/>
+			<xsd:enumeration value="GreaterThanEqual"/>
+			<xsd:enumeration value="LessThan"/>
+			<xsd:enumeration value="LessThanEqual"/>
+			<xsd:enumeration value="IsNull"/>
+			<xsd:enumeration value="IsNotNull"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="WcoBehavioralRuleTypeType">
+		<xsd:restriction base="xsd:normalizedString">
+			<xsd:enumeration value="ViewedSnippet"/>
+			<xsd:enumeration value="ConvertedSnippet"/>
+			<xsd:enumeration value="ViewedVariant"/>
+			<xsd:enumeration value="ConvertedVariant"/>
+			<xsd:enumeration value="ConvertedFromLink"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 

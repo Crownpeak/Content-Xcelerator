@@ -28,7 +28,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 		private Dictionary<string, int> _workflowMaps = new Dictionary<string, int>();
 		private Dictionary<string, int> _workflowFilterMaps = new Dictionary<string, int>();
 
-		public MigrationEngineWrapper(string server, string instance, string developerKey, string username, string password)
+		public MigrationEngineWrapper(string server, string instance, string developerKey, string username, string password, bool useWco, string wcoUsername, string wcoPassword)
 		{
 			_cms = new CmsInstance
 			{
@@ -38,6 +38,11 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 				Username = username,
 				Password = password
 			};
+			if (useWco)
+			{
+				_cms.WcoUsername = wcoUsername;
+				_cms.WcoPassword = wcoPassword;
+			}
 			_migrationEngine = new MigrationEngine(_cms);
 		}
 
@@ -172,12 +177,15 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 						if (!includeTemplates && (type.HasFlag(CmsAssetType.TemplatesFolder) || type.HasFlag(CmsAssetType.TemplateFolder) || type.HasFlag(CmsAssetType.Template))) continue;
 						if (!includeModels && type.HasFlag(CmsAssetType.Model)) continue;
 						if (!includeContent && (type.HasFlag(CmsAssetType.ContentAsset) || type.HasFlag(CmsAssetType.DigitalAsset))) continue;
-						CreateNodeForItem(asset, nodes, topPath);
+						if (asset.Name == "folder" || asset.Name == "asset")
+							CreateNodeForItem(asset, nodes, topPath);
 					}
 				}
 			}
 
-			PruneTree(topNode);
+			// Removed 2019-10-01 as it kills empty folders that are useful in Models
+			//PruneTree(topNode);
+
 			if (rootNode != null && rootNode.Nodes.Count == 0)
 			{
 				// Kill the root node if we didn't need it
@@ -190,6 +198,8 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			return nodes.ToArray();
 		}
 
+		/*
+		// TODO: delete this once I'm sure it has no use any longer
 		private void PruneTree(TreeNode node)
 		{
 			if (node == null) return;
@@ -204,6 +214,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			if (node.Nodes.Count == 0 && Common.IsNodeAllowedChildren(node.ImageIndex))
 				node.Remove();
 		}
+		*/
 
 		private void CreateNodeForItem(XmlNode asset, List<TreeNode> nodes, string topPath)
 		{
@@ -788,9 +799,9 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 
 		#region Shared Methods
 
-		public static bool Authenticate(string server, string instance, string developerKey, string username, string password)
+		public static bool Authenticate(string server, string instance, string developerKey, string username, string password, bool useWco, string wcoUsername, string wcoPassword)
 		{
-			return Authenticate(new CmsInstance()
+			var result = Authenticate(new CmsInstance
 			{
 				Server = server,
 				Instance = instance,
@@ -798,6 +809,15 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 				Username = username,
 				Password = password
 			});
+			if (useWco)
+			{
+				result = result && WcoAuthenticate(new CmsInstance
+				{
+					WcoUsername = wcoUsername,
+					WcoPassword = wcoPassword
+				});
+			}
+			return result;
 		}
 
 		public static bool Authenticate(CmsInstance cms)
@@ -805,6 +825,18 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			try
 			{
 				return MigrationEngine.Authenticate(cms);
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
+		public static bool WcoAuthenticate(CmsInstance cms)
+		{
+			try
+			{
+				return MigrationEngine.WcoAuthenticate(cms);
 			}
 			catch
 			{

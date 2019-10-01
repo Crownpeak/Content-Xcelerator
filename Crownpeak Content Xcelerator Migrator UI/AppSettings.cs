@@ -76,7 +76,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 
 		private static string SerializeCmsInstance(CmsInstance value)
 		{
-			return value.Server + "," + value.Instance + "," + value.Key + "," + value.Username;
+			return value.Server + "," + value.Instance + "," + value.Key + "," + value.Username + "," + value.WcoUsername;
 		}
 
 		private static CmsInstance DeserializeCmsInstance(string value)
@@ -84,13 +84,17 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			if (string.IsNullOrWhiteSpace(value)) return null;
 
 			var temp = value.Split(",".ToCharArray());
-			return new CmsInstance
+			var cmsInstance = new CmsInstance
 			{
 				Server = temp[0],
 				Instance = temp[1],
 				Key = temp[2],
 				Username = temp[3]
 			};
+			if (temp.Length > 4 && !string.IsNullOrWhiteSpace(temp[4]))
+				cmsInstance.WcoUsername = temp[4];
+
+			return cmsInstance;
 		}
 
 		private static string SerializeCmsInstances(CmsInstance[] values)

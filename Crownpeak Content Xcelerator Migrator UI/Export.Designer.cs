@@ -32,6 +32,13 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Export));
 			this.tabWizard = new System.Windows.Forms.TabControl();
 			this.tabPage1 = new System.Windows.Forms.TabPage();
+			this.txtWcoPassword = new System.Windows.Forms.TextBox();
+			this.lblWcoPassword = new System.Windows.Forms.Label();
+			this.txtWcoUsername = new System.Windows.Forms.TextBox();
+			this.lblWcoUsername = new System.Windows.Forms.Label();
+			this.rbWcoNo = new System.Windows.Forms.RadioButton();
+			this.rbWcoYes = new System.Windows.Forms.RadioButton();
+			this.label12 = new System.Windows.Forms.Label();
 			this.btnClearSessions = new System.Windows.Forms.Button();
 			this.cboSessions = new System.Windows.Forms.ComboBox();
 			this.label11 = new System.Windows.Forms.Label();
@@ -95,6 +102,13 @@
 			// 
 			// tabPage1
 			// 
+			this.tabPage1.Controls.Add(this.txtWcoPassword);
+			this.tabPage1.Controls.Add(this.lblWcoPassword);
+			this.tabPage1.Controls.Add(this.txtWcoUsername);
+			this.tabPage1.Controls.Add(this.lblWcoUsername);
+			this.tabPage1.Controls.Add(this.rbWcoNo);
+			this.tabPage1.Controls.Add(this.rbWcoYes);
+			this.tabPage1.Controls.Add(this.label12);
 			this.tabPage1.Controls.Add(this.btnClearSessions);
 			this.tabPage1.Controls.Add(this.cboSessions);
 			this.tabPage1.Controls.Add(this.label11);
@@ -116,6 +130,78 @@
 			this.tabPage1.TabIndex = 0;
 			this.tabPage1.Text = "CMS";
 			this.tabPage1.UseVisualStyleBackColor = true;
+			// 
+			// txtWcoPassword
+			// 
+			this.txtWcoPassword.Enabled = false;
+			this.txtWcoPassword.Location = new System.Drawing.Point(94, 213);
+			this.txtWcoPassword.Name = "txtWcoPassword";
+			this.txtWcoPassword.Size = new System.Drawing.Size(208, 20);
+			this.txtWcoPassword.TabIndex = 19;
+			this.txtWcoPassword.UseSystemPasswordChar = true;
+			this.txtWcoPassword.KeyDown += new System.Windows.Forms.KeyEventHandler(this.CmsTabText_KeyDown);
+			// 
+			// lblWcoPassword
+			// 
+			this.lblWcoPassword.AutoSize = true;
+			this.lblWcoPassword.Enabled = false;
+			this.lblWcoPassword.Location = new System.Drawing.Point(8, 216);
+			this.lblWcoPassword.Name = "lblWcoPassword";
+			this.lblWcoPassword.Size = new System.Drawing.Size(85, 13);
+			this.lblWcoPassword.TabIndex = 18;
+			this.lblWcoPassword.Text = "WCO Password:";
+			// 
+			// txtWcoUsername
+			// 
+			this.txtWcoUsername.Enabled = false;
+			this.txtWcoUsername.Location = new System.Drawing.Point(94, 187);
+			this.txtWcoUsername.Name = "txtWcoUsername";
+			this.txtWcoUsername.Size = new System.Drawing.Size(208, 20);
+			this.txtWcoUsername.TabIndex = 17;
+			this.txtWcoUsername.KeyDown += new System.Windows.Forms.KeyEventHandler(this.CmsTabText_KeyDown);
+			// 
+			// lblWcoUsername
+			// 
+			this.lblWcoUsername.AutoSize = true;
+			this.lblWcoUsername.Enabled = false;
+			this.lblWcoUsername.Location = new System.Drawing.Point(8, 190);
+			this.lblWcoUsername.Name = "lblWcoUsername";
+			this.lblWcoUsername.Size = new System.Drawing.Size(87, 13);
+			this.lblWcoUsername.TabIndex = 16;
+			this.lblWcoUsername.Text = "WCO Username:";
+			// 
+			// rbWcoNo
+			// 
+			this.rbWcoNo.AutoSize = true;
+			this.rbWcoNo.Checked = true;
+			this.rbWcoNo.Location = new System.Drawing.Point(143, 164);
+			this.rbWcoNo.Name = "rbWcoNo";
+			this.rbWcoNo.Size = new System.Drawing.Size(39, 17);
+			this.rbWcoNo.TabIndex = 15;
+			this.rbWcoNo.TabStop = true;
+			this.rbWcoNo.Text = "No";
+			this.rbWcoNo.UseVisualStyleBackColor = true;
+			this.rbWcoNo.CheckedChanged += new System.EventHandler(this.RbWcoNo_CheckedChanged);
+			// 
+			// rbWcoYes
+			// 
+			this.rbWcoYes.AutoSize = true;
+			this.rbWcoYes.Location = new System.Drawing.Point(94, 164);
+			this.rbWcoYes.Name = "rbWcoYes";
+			this.rbWcoYes.Size = new System.Drawing.Size(43, 17);
+			this.rbWcoYes.TabIndex = 14;
+			this.rbWcoYes.Text = "Yes";
+			this.rbWcoYes.UseVisualStyleBackColor = true;
+			this.rbWcoYes.CheckedChanged += new System.EventHandler(this.RbWcoYes_CheckedChanged);
+			// 
+			// label12
+			// 
+			this.label12.AutoSize = true;
+			this.label12.Location = new System.Drawing.Point(8, 164);
+			this.label12.Name = "label12";
+			this.label12.Size = new System.Drawing.Size(58, 13);
+			this.label12.TabIndex = 13;
+			this.label12.Text = "Use WCO:";
 			// 
 			// btnClearSessions
 			// 
@@ -165,10 +251,10 @@
 			// 
 			// btnVerify
 			// 
-			this.btnVerify.Location = new System.Drawing.Point(94, 164);
+			this.btnVerify.Location = new System.Drawing.Point(94, 239);
 			this.btnVerify.Name = "btnVerify";
 			this.btnVerify.Size = new System.Drawing.Size(75, 23);
-			this.btnVerify.TabIndex = 13;
+			this.btnVerify.TabIndex = 20;
 			this.btnVerify.Text = "Verify";
 			this.btnVerify.UseVisualStyleBackColor = true;
 			this.btnVerify.Click += new System.EventHandler(this.btnVerify_Click);
@@ -589,5 +675,12 @@
 		private System.Windows.Forms.Button btnClearSessions;
 		private System.Windows.Forms.ProgressBar progressBar1;
 		private System.Windows.Forms.ImageList imageList1;
+		private System.Windows.Forms.TextBox txtWcoPassword;
+		private System.Windows.Forms.Label lblWcoPassword;
+		private System.Windows.Forms.TextBox txtWcoUsername;
+		private System.Windows.Forms.Label lblWcoUsername;
+		private System.Windows.Forms.RadioButton rbWcoNo;
+		private System.Windows.Forms.RadioButton rbWcoYes;
+		private System.Windows.Forms.Label label12;
 	}
 }

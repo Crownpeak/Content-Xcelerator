@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Crownpeak.ContentXcelerator.Migrator</RootNamespace>
     <AssemblyName>Crownpeak.ContentXcelerator.Migrator</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,11 +41,15 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="WcoApiHelper">
+      <HintPath>..\3rdPartyDll\WcoApiHelper.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CmsAssetCache.cs" />
@@ -63,6 +68,8 @@
     <Compile Include="MigrationSessionBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PublishingProperties.cs" />
+    <Compile Include="WcoXmlHelper.cs" />
+    <Compile Include="Wco\Variant.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Content-Xcelerator.xsd">

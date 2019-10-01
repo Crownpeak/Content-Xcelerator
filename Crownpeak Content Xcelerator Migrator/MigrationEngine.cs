@@ -9,6 +9,16 @@ using System.Xml;
 using CrownPeak.AccessApiHelper;
 using CrownPeak.AccessApiHelper.ApiAccessor;
 using CrownPeak.AccessAPI;
+using Crownpeak.WcoApiHelper;
+using Crownpeak.WcoApiHelper.ApiAccessor;
+using Connector = Crownpeak.WcoApiHelper.Connector;
+using Field = Crownpeak.WcoApiHelper.Field;
+using Form = Crownpeak.WcoApiHelper.Form;
+using IApiAccessor = CrownPeak.AccessApiHelper.ApiAccessor.IApiAccessor;
+using RuleType = Crownpeak.WcoApiHelper.RuleType;
+using Snippet = Crownpeak.WcoApiHelper.Snippet;
+using TargetGroup = Crownpeak.WcoApiHelper.TargetGroup;
+using Variant = Crownpeak.WcoApiHelper.Variant;
 
 namespace Crownpeak.ContentXcelerator.Migrator
 {
@@ -18,7 +28,13 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 		private bool _loggedIn;
 		private CmsApi _api;
+		private WcoApi _wco = null;
 		private CmsAssetCache _cache;
+		private Connector[] _connectors = null;
+		private Field[] _fields = null;
+		private Form[] _forms = null;
+		private WcoApiHelper.Snippet[] _snippets = null;
+		private TargetGroup[] _targetGroups = null;
 		private Dictionary<int, WorkflowData> _workflowsById;
 		private Dictionary<string, int> _workflowsByName;
 		private Dictionary<int, WorkflowFilter> _workflowFiltersById;
@@ -26,7 +42,13 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		private Dictionary<string, bool> _workflowsWithDuplicateName;
 		private Dictionary<int, PublishingPackage> _packagesById;
 		private Dictionary<string, int> _packagesByName;
+		private static Regex reForm = new Regex("<input(?:(?:[^>]+name=\"WcoFormId\"[^>]+value=['\"]?(?<formid>[^\"'/\\s]+)['\"]?[^>]+)|(?:[^>]+value=['\"]?(?<formid>[^\"'/\\s]+)['\"]?[^>]+name=\"WcoFormId\"[^>]+)[/]?)>", RegexOptions.IgnoreCase);
+		private static Regex reVariant = new Regex("http[s]://snippet.omm.crownpeak.com/p/(?<variantid>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", RegexOptions.IgnoreCase);
 
+		private static Regex regex = new Regex("/(?<instance>[A-Za-z0-9]+)/cpt_internal/(?<path>([0-9]+/)*)(?<id>[0-9]+)", RegexOptions.None);
+		private static Regex regex2 = new Regex("^(/[A-Za-z0-9 _.\\-]+){2,}/?$", RegexOptions.None);
+		private static Regex regex3 = new Regex("^([0-9]{4,})$", RegexOptions.None);
+		
 		public MigrationEngine(CmsInstance cmsInstance)
 		{
 			IApiAccessor accessor = new SimpleApiAccessor();
@@ -35,7 +57,14 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 			_api.Login(cmsInstance.Username, cmsInstance.Password);
 
-			_cache = new CmsAssetCache(CACHE_SIZE, _api);
+			_wco = null;
+			if (!string.IsNullOrWhiteSpace(cmsInstance.WcoUsername) && !string.IsNullOrWhiteSpace(cmsInstance.WcoPassword))
+			{
+				_wco = new WcoApi(new Crownpeak.WcoApiHelper.ApiAccessor.ApiAccessor());
+				_wco.Login(cmsInstance.WcoUsername, cmsInstance.WcoPassword);
+			}
+
+			_cache = new CmsAssetCache(CACHE_SIZE, _api, _wco);
 		}
 
 
@@ -52,6 +81,23 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			}
 
 			if (!api.Login(cmsInstance.Username, cmsInstance.Password))
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		public static bool WcoAuthenticate(CmsInstance cmsInstance)
+		{
+			var wco = new WcoApi(new Crownpeak.WcoApiHelper.ApiAccessor.ApiAccessor());
+
+			if (cmsInstance.WcoPassword.Length == 0 || cmsInstance.WcoUsername.Length == 0)
+			{
+				return false;
+			}
+
+			if (!wco.Login(cmsInstance.WcoUsername, cmsInstance.WcoPassword))
 			{
 				return false;
 			}
@@ -84,6 +130,71 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			//{
 			//    exportSession.LogEntry("", "Authentication failed", EventLogEntryType.FailureAudit);
 			//}
+		}
+
+		private Connector[] GetConnectors()
+		{
+			if (_connectors != null) return _connectors;
+
+			_connectors = new Connector[0];
+			if (_wco != null)
+			{
+				if (!_wco.Connectors.GetConnectors(out _connectors))
+					_connectors = new Connector[0];
+			}
+			return _connectors;
+		}
+
+		private Field[] GetFields()
+		{
+			if (_fields != null) return _fields;
+
+			_fields = new Field[0];
+			if (_wco != null)
+			{
+				if (!_wco.Fields.GetFields(out _fields))
+					_fields = new Field[0];
+			}
+			return _fields;
+		}
+
+		private Form[] GetForms()
+		{
+			if (_forms != null) return _forms;
+
+			_forms = new Form[0];
+			if (_wco != null)
+			{
+				if (!_wco.Forms.GetForms(out _forms))
+					_forms = new Form[0];
+			}
+			return _forms;
+		}
+
+		private WcoApiHelper.Snippet[] GetSnippets()
+		{
+			if (_snippets != null) return _snippets;
+
+			_snippets = new WcoApiHelper.Snippet[0];
+			if (_wco != null)
+			{
+				if (!_wco.Snippets.GetActiveSnippets(out _snippets))
+					_snippets = new WcoApiHelper.Snippet[0];
+			}
+			return _snippets;
+		}
+
+		private WcoApiHelper.TargetGroup[] GetTargetGroups()
+		{
+			if (_targetGroups != null) return _targetGroups;
+
+			_targetGroups = new TargetGroup[0];
+			if (_wco != null)
+			{
+				if (!_wco.TargetGroups.GetTargetGroups(out _targetGroups))
+				_targetGroups = new TargetGroup[0];
+			}
+			return _targetGroups;
 		}
 
 		private static void OutputToFile(XmlNode xml, ExportSession exportSession)
@@ -163,6 +274,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		private void GenerateXml(WorklistAsset asset, IEnumerable<KeyValuePair<string, string>> fieldCollection, XmlNode parent, bool isTop = false)
 		{
 			var xml = parent is XmlDocument ? parent as XmlDocument : parent.OwnerDocument;
+			var top = xml.SelectSingleNode("/assets");
 			XmlNode node;
 
 			if (asset.type.HasValue && asset.type == 4) // folder
@@ -320,6 +432,131 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						var field = fields.AppendChild(xml.CreateElement("field"));
 						field.AppendChild(xml.CreateElement("name")).InnerText = kvp.Key;
 						field.AppendChild(xml.CreateElement("value")).InnerText = kvp.Value;
+
+						if (_wco != null && kvp.Key.StartsWith("ommsnippetid#") && !string.IsNullOrWhiteSpace(kvp.Value))
+						{
+							if (_wco.Snippets.GetSnippetWithVariants(kvp.Value, true, out var variants))
+							{
+								if (_wco.Snippets.GetSnippetOverview(kvp.Value, out var snippet))
+								{
+									if (string.IsNullOrWhiteSpace(snippet.Id)) snippet.Id = snippet.SnippetId;
+									if (top.SelectSingleNode("snippet[id='" + snippet.Id + "']") == null)
+									{
+										var snippetNode = top.AppendChild(xml.CreateElement("snippet"));
+										snippetNode.AppendChild(xml.CreateElement("id")).InnerText = snippet.Id;
+										snippetNode.AppendChild(xml.CreateElement("name")).InnerText = snippet.Name;
+										snippetNode.AppendChild(xml.CreateElement("hasTestingVariant")).InnerText = snippet.HasTestingVariant.ToString().ToLowerInvariant();
+										snippetNode.AppendChild(xml.CreateElement("hasTargetingVariant")).InnerText = snippet.HasTargetingVariant.ToString().ToLowerInvariant();
+										var variantsNode = snippetNode.AppendChild(xml.CreateElement("variants"));
+										foreach (var variant in variants.Where(v => !v.Archived && !v.Deleted))
+										{
+											var variantNode = variantsNode.AppendChild(xml.CreateElement("variant"));
+											variantNode.AppendChild(xml.CreateElement("id")).InnerText = variant.Id;
+											variantNode.AppendChild(xml.CreateElement("name")).InnerText = variant.Name;
+											variantNode.AppendChild(xml.CreateElement("order")).InnerText = variant.Order.ToString();
+											variantNode.AppendChild(xml.CreateElement("weight")).InnerText = variant.Weight.ToString();
+											variantNode.AppendChild(xml.CreateElement("snippetVariant")).InnerText = variant.SnippetVariant.ToString();
+											variantNode.AppendChild(xml.CreateElement("targetGroupId")).InnerText = variant.TargetGroupId;
+											var targetGroup = GetTargetGroups().FirstOrDefault(g => g.Id == variant.TargetGroupId);
+											if (targetGroup != null && top.SelectSingleNode("targetGroup[id='" + targetGroup.Id + "']") == null)
+											{
+												var targetGroupNode = top.AppendChild(xml.CreateElement("targetGroup"));
+												targetGroupNode.AppendChild(xml.CreateElement("id")).InnerText = targetGroup.Id;
+												targetGroupNode.AppendChild(xml.CreateElement("name")).InnerText = targetGroup.Name;
+												if (targetGroup.Rules.Length > 0)
+												{
+													var rulesNode = targetGroupNode.AppendChild(xml.CreateElement("rules"));
+													foreach (var rule in targetGroup.Rules)
+													{
+														var ruleNode = rulesNode.AppendChild(xml.CreateElement("rule"));
+														ruleNode.AppendChild(xml.CreateElement("fieldId")).InnerText = rule.FieldId;
+														var wcoField = GetFields().FirstOrDefault(f => f.Id == rule.FieldId);
+														if (wcoField != null && top.SelectSingleNode("field[id='" + wcoField.Id + "']") == null)
+														{
+															WcoXmlHelper.ExportField(wcoField, top, "field");
+														}
+
+														ruleNode.AppendChild(xml.CreateElement("op")).InnerText = rule.Op.ToString();
+														ruleNode.AppendChild(xml.CreateElement("value")).InnerText = rule.Value;
+														// Special values for integrations
+														if (rule.Value != null && rule.Value.IndexOf("$CP$") >= 0)
+														{
+															var values = rule.Value.Split(new[] {"$CP$"}, StringSplitOptions.None);
+															if (values.Length >= 2)
+															{
+																var fieldId = values[1];
+																if (fieldId.Length == 36)
+																{
+																	// Could be a guid, so look up that field
+																	wcoField = GetFields().FirstOrDefault(f => f.Id == fieldId);
+																	if (wcoField != null && top.SelectSingleNode("field[id='" + wcoField.Id + "']") == null)
+																	{
+																		WcoXmlHelper.ExportField(wcoField, top, "field");
+																	}
+																}
+															}
+														}
+
+														ruleNode.AppendChild(xml.CreateElement("order")).InnerText = rule.Order.ToString();
+													}
+												}
+
+												if (targetGroup.BehavioralRules.Length > 0)
+												{
+													var rulesNode = targetGroupNode.AppendChild(xml.CreateElement("behavioralRules"));
+													foreach (var rule in targetGroup.BehavioralRules)
+													{
+														var ruleNode = rulesNode.AppendChild(xml.CreateElement("rule"));
+														ruleNode.AppendChild(xml.CreateElement("id")).InnerText = rule.Id;
+														ruleNode.AppendChild(xml.CreateElement("ruleType")).InnerText = rule.RuleType.ToString();
+														ruleNode.AppendChild(xml.CreateElement("data")).InnerText = rule.Data;
+														ruleNode.AppendChild(xml.CreateElement("referrer")).InnerText = rule.Referrer;
+														ruleNode.AppendChild(xml.CreateElement("threshold")).InnerText = rule.Threshold.ToString();
+													}
+												}
+											}
+
+											variantNode.AppendChild(xml.CreateElement("content")).InnerText = variant.EmbedCode;
+
+											if (variant.EmbedCode.IndexOf("<form", StringComparison.InvariantCultureIgnoreCase) >= 0
+											    && variant.EmbedCode.IndexOf("WcoFormId", StringComparison.InvariantCultureIgnoreCase) >= 0)
+											{
+												foreach (Match match in reForm.Matches(variant.EmbedCode))
+												{
+													var formId = match.Groups["formid"].Value;
+													if (!string.IsNullOrWhiteSpace(formId))
+													{
+														var form = GetForms().FirstOrDefault(f => f.Id == formId);
+														if (form != null && top.SelectSingleNode("form[id='" + form.Id + "']") == null)
+														{
+															WcoXmlHelper.ExportForm(form, top, "form");
+															var connectorField = form.HiddenFields.FirstOrDefault(f => f.Key == "WcoConnectorId");
+															if (connectorField != null && !string.IsNullOrWhiteSpace(connectorField.Value))
+															{
+																var connector = GetConnectors().FirstOrDefault(c => c.Id == connectorField.Value);
+																if (connector != null && top.SelectSingleNode("connector[id='" + connector.Id + "']") == null)
+																{
+																	WcoXmlHelper.ExportConnector(connector, top, "connector");
+																}
+															}
+
+															foreach (var element in form.FormElements)
+															{
+																var wcoField = GetFields().FirstOrDefault(f => f.Name == element.Key && (int) f.Type == int.Parse(element.Value));
+																if (wcoField != null && top.SelectSingleNode("field[id='" + wcoField.Id + "']") == null)
+																{
+																	WcoXmlHelper.ExportField(wcoField, top, "field");
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 
 					if (GetAssetType(asset, node.OwnerDocument).HasFlag(CmsAssetType.DigitalAsset))
@@ -464,7 +701,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 									stepNode.AppendChildElement("conflictStep", step.ConflictStep);
 								if (step.BranchStep.HasValue)
 									stepNode.AppendChildElement("branchStep", step.BranchStep);
-								stepNode.AppendChildElement("inMenu", step.InMenu);
+								stepNode.AppendChildElement("inMenu", step.InMenu ?? false);
 								if (step.UseDqm.HasValue)
 								{
 									stepNode.AppendChildElement("useDqm", step.UseDqm);
@@ -710,7 +947,14 @@ namespace Crownpeak.ContentXcelerator.Migrator
 										if (resourceUsingModel.Asset != null)
 										{
 											// We should also set the model on the asset that was already created
-											_api.AssetProperties.SetModel(resourceUsingModel.Asset.id, asset.id);
+											try
+											{
+												_api.AssetProperties.SetModel(resourceUsingModel.Asset.id, asset.id);
+											}
+											catch (Exception)
+											{
+												// We don't really care if this fails - it's not so important
+											}
 										}
 									}
 								}
@@ -741,9 +985,9 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 			importSession.LogEntry("", "Starting relinking.", EventLogEntryType.Information);
 
-			var regex = new Regex("/(?<instance>[A-Za-z0-9]+)/cpt_internal/(?<path>([0-9]+/)*)(?<id>[0-9]+)", RegexOptions.None);
-			var regex2 = new Regex("^(/[A-Za-z0-9 _.\\-]+){2,}/?$", RegexOptions.None);
-			var regex3 = new Regex("^([0-9]{4,})$", RegexOptions.None);
+			//var regex = new Regex("/(?<instance>[A-Za-z0-9]+)/cpt_internal/(?<path>([0-9]+/)*)(?<id>[0-9]+)", RegexOptions.None);
+			//var regex2 = new Regex("^(/[A-Za-z0-9 _.\\-]+){2,}/?$", RegexOptions.None);
+			//var regex3 = new Regex("^([0-9]{4,})$", RegexOptions.None);
 
 			foreach (var resource in resourcesForRelinking)
 			{
@@ -753,76 +997,174 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				{
 					var originalFields = GetFields(node);
 					var fields = new Dictionary<string, string>();
+					var fieldsToDelete = new List<string>();
 					foreach (var field in originalFields)
 					{
-						// Shortcut empty fields
-						if (string.IsNullOrEmpty(field.Value)) continue;
-						var matches = regex.Matches(field.Value);
-						if (matches.Count > 0)
+						if (ReplaceLinks(importSession, field.Value, out var newValue))
 						{
-							var newValue = field.Value;
+							fields.Add(field.Key, newValue);
+						}
+					}
 
-							// We found matches, now we need to fix them
-							foreach (Match match in matches)
+					foreach (var field in originalFields.Where(f => f.Key.StartsWith("ommsnippetid#")))
+					{
+						var newSnippet = _cache.GetSnippetByOldId(field.Value);
+						if (newSnippet != null)
+						{
+							fields.Add(field.Key, newSnippet.Id);
+							// Now find the original variants
+							foreach (XmlNode variantNode in xml.SelectNodes("/assets/snippet[id='" + field.Value + "']/variants/variant"))
 							{
-								var id = int.Parse(match.Groups["id"].Value);
-								// Find the new asset for this old id
-								var newResource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null && r.AssetId == id);
-								if (newResource != null)
+								var oldVariantId = variantNode.SelectSingleNode("id").InnerText;
+								var newVariant = _cache.GetVariantByOldId(oldVariantId);
+								if (newVariant != null)
 								{
-									var replacement = string.Format("/{0}/cpt_internal/{1}", importSession.Instance.Instance, newResource.Asset.id);
-									newValue = newValue.Replace(match.Value, replacement);
+									var content = originalFields.ContainsKey("ommvarcont#" + oldVariantId) ? originalFields["ommvarcont#" + oldVariantId] : newVariant.EmbedCode;
+									if (ReplaceLinks(importSession, content, out var updatedContent))
+									{
+										content = updatedContent;
+									}
+									fields.Add("ommvarcont#" + newVariant.Id, content);
+									fieldsToDelete.Add("ommvarcont#" + oldVariantId);
+									if (fields.ContainsKey("ommvarcont#" + oldVariantId)) fields.Remove("ommvarcont#" + oldVariantId);
 								}
-							}
-							if (newValue != field.Value)
-							{
-								// Save it if we actually made any changes
-								fields.Add(field.Key, newValue);
 							}
 						}
-						else
+					}
+
+					foreach (var field in originalFields.Where(f => f.Key.StartsWith("ommvariantid#")))
+					{
+						var newVariant = _cache.GetVariantByOldId(field.Value);
+						if (newVariant != null)
 						{
-							// Try a path match instead - used by Component Library
-							matches = regex2.Matches(field.Value);
-							if (matches.Count > 0)
-							{
-								// There can only be one match with this one
-								var path = matches[0].Value;
-								var newResource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null
-									&& (r.Path.Equals(path, StringComparison.OrdinalIgnoreCase)
-									|| r.Path.Equals(path.Substring(1), StringComparison.OrdinalIgnoreCase)));
-								if (newResource != null)
-								{
-									fields.Add(field.Key, newResource.Asset.FullPath);
-								}
-							}
-							else
-							{
-								// Try a pure id match instead - used by TMF
-								// Note there's a risk we could replace a real number here...
-								matches = regex3.Matches(field.Value);
-								if (matches.Count > 0)
-								{
-									// There can only be one match with this one
-									// Find the new asset for this old id
-									var newResource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null && r.AssetId.ToString() == field.Value);
-									if (newResource != null)
-									{
-										fields.Add(field.Key, newResource.Asset.id.ToString());
-									}
-								}
-							}
+							fields.Add(field.Key, newVariant.Id);
 						}
 					}
 
 					if (fields.Count > 0)
 					{
 						// Save our changes
-						_cache.UpdateAsset(resource.Asset, fields);
+						_cache.UpdateAsset(resource.Asset, fields, fieldsToDelete);
 						importSession.LogEntry("Asset: " + resource.Asset.id, $"Relinked {fields.Count} field(s)", EventLogEntryType.Information);
 					}
 				}
 			}
+
+			// We have to serialize the dictionary because SaveSnippet will modify it later
+			var snippetsCopy = _cache.GetSnippets().ToList();
+			foreach (var snippet in snippetsCopy)
+			{
+				var updated = 0;
+				if (_wco.Snippets.GetSnippetWithVariants(snippet.Value.Id, true, out var variants))
+				{
+					var variantsToSave = variants.Select(v => new Wco.Variant(v)).ToArray();
+					foreach (var variant in variantsToSave)
+					{
+						updated += ReplaceLinks(importSession, variant.EmbedCode, out var newValue) ? 1 : 0;
+						variant.EmbedCode = newValue;
+						var oldVariantId = _cache.GetOldVariantIdByNewId(variant.Id);
+						if (!string.IsNullOrEmpty(oldVariantId))
+							variant.OriginalId = oldVariantId;
+					}
+					
+					if (updated > 0)
+					{
+						_cache.SaveSnippet(snippet.Value.Id, snippet.Value.Name, variantsToSave, true, true);
+						importSession.LogEntry("Snippet: " + snippet.Value.Name, $"Relinked {updated} variants(s)", EventLogEntryType.Information);
+					}
+				}
+			}
+		}
+
+		private bool ReplaceLinks(ImportSession importSession, string value, out string relinkedValue)
+		{
+			relinkedValue = value;
+			var newValue = value;
+			// Shortcut empty fields
+			if (string.IsNullOrEmpty(value)) return false;
+			var matches = regex.Matches(value);
+			if (matches.Count > 0)
+			{
+				// We found matches, now we need to fix them
+				foreach (Match match in matches)
+				{
+					var id = int.Parse(match.Groups["id"].Value);
+					// Find the new asset for this old id
+					var newResource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null && r.AssetId == id);
+					if (newResource != null)
+					{
+						var replacement = string.Format("/{0}/cpt_internal/{1}", importSession.Instance.Instance, newResource.Asset.id);
+						newValue = newValue.Replace(match.Value, replacement);
+					}
+				}
+			}
+			else
+			{
+				// Try a path match instead - used by Component Library
+				matches = regex2.Matches(value);
+				if (matches.Count > 0)
+				{
+					// There can only be one match with this one
+					var path = matches[0].Value;
+					var newResource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null
+						&& (r.Path.Equals(path, StringComparison.OrdinalIgnoreCase)
+						|| r.Path.Equals(path.Substring(1), StringComparison.OrdinalIgnoreCase)));
+					if (newResource != null)
+					{
+						relinkedValue = newResource.Asset.FullPath;
+						return true;
+					}
+				}
+				else
+				{
+					// Try a pure id match instead - used by TMF
+					// Note there's a risk we could replace a real number here...
+					matches = regex3.Matches(value);
+					if (matches.Count > 0)
+					{
+						// There can only be one match with this one
+						// Find the new asset for this old id
+						var newResource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null && r.AssetId.ToString() == value);
+						if (newResource != null)
+						{
+							relinkedValue = newResource.Asset.id.ToString();
+							return true;
+						}
+					}
+				}
+			}
+
+			// Look for WcoFormId elements
+			foreach (Match match in reForm.Matches(newValue))
+			{
+				var formId = match.Groups["formid"].Value;
+				// Find the new form for this old id
+				var newForm = _cache.GetFormByOldId(formId);
+				if (newForm != null)
+				{
+					newValue = newValue.Replace(formId, newForm.Id);
+				}
+			}
+
+			// Look for variants (used to post back forms)
+			foreach (Match match in reVariant.Matches(newValue))
+			{
+				var variantId = match.Groups["variantid"].Value;
+				// Find the new form for this old id
+				var newVariant = _cache.GetVariantByOldId(variantId);
+				if (newVariant != null)
+				{
+					newValue = newValue.Replace(variantId, newVariant.Id);
+				}
+			}
+
+			if (newValue != value)
+			{
+				relinkedValue = newValue;
+				return true;
+			}
+
+			return false;
 		}
 
 		private void RecompileLibraries(XmlDocument xml, ImportSession importSession)
@@ -1264,6 +1606,9 @@ namespace Crownpeak.ContentXcelerator.Migrator
 								workflowId.HasValue ? workflowId.Value : 0, fields);
 							if (asset == null)
 								throw new Exception("Error creating asset");
+
+							ProcessWcoFields(importSession, asset, fields, node, overwrite);
+
 							created = true;
 						}
 					}
@@ -1274,9 +1619,11 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					if (fields.Count > 0)
 					{
 						// Update an existing asset
-						asset = _cache.UpdateAsset(asset, fields);
+						asset = _cache.UpdateAsset(asset, fields, new List<string>());
 						if (asset == null)
 							throw new Exception("Error updating asset");
+
+						ProcessWcoFields(importSession, asset, fields, node, overwrite);
 					}
 				}
 			}
@@ -1334,6 +1681,144 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			asset.FullPath = string.Concat(folder.FullPath.TrimEnd(new[] { '/' }), "/", asset.label);
 
 			return true;
+		}
+
+		private void ProcessWcoFields(ImportSession importSession, WorklistAsset asset, Dictionary<string, string> fields, XmlNode node, bool overwrite)
+		{
+			if (_wco == null) return;
+
+			foreach (var field in fields.Where(f => f.Key.StartsWith("omm")))
+			{
+				if (field.Key.StartsWith("ommsnippetid#") && !string.IsNullOrWhiteSpace(field.Value))
+				{
+					var snippetId = field.Value;
+					var snippetNode = node.OwnerDocument.SelectSingleNode("/assets/snippet[id='" + snippetId + "']");
+					var snippet = WcoXmlHelper.ImportSnippet(snippetNode);
+
+					foreach (var variant in snippet.Variants)
+					{
+						// Handle the target groups that each variant uses
+						var targetGroupId = variant.TargetGroupId;
+						if (targetGroupId != Guid.Empty.ToString())
+						{
+							var targetGroupNode = node.OwnerDocument.SelectSingleNode("/assets/targetGroup[id='" + targetGroupId + "']");
+							var targetGroup = WcoXmlHelper.ImportTargetGroup(targetGroupNode);
+
+							// Handle the fields that each target group uses
+							foreach (var rule in targetGroup.Rules)
+							{
+								var rulefieldNode = node.OwnerDocument.SelectSingleNode("/assets/field[id='" + rule.FieldId + "']");
+								if (rulefieldNode != null)
+								{ 
+									var ruleField = WcoXmlHelper.ImportField(rulefieldNode);
+
+									rule.FieldId = _cache.SaveField(ruleField.Id, ruleField.Name, ruleField.Label, ruleField.MaxLength, ruleField.InitialValue, ruleField.Required, ruleField.Type, ruleField.FieldValues, ruleField.Placeholder, ruleField.ValidPattern, overwrite, false).Id;
+								}
+								else if (rule.Value.IndexOf("$CP$") >= 0)
+								{
+									// Rules using integration have value in the format marketokeyfield$CP$wcokeyfieldid$CP$marketofieldname$CP$value
+									var values = rule.Value.Split(new[] {"$CP$"}, StringSplitOptions.None);
+									if (values.Length > 2)
+									{
+										rulefieldNode = node.OwnerDocument.SelectSingleNode("/assets/field[id='" + values[1] + "']");
+										if (rulefieldNode != null)
+										{
+											var ruleField = WcoXmlHelper.ImportField(rulefieldNode);
+
+											values[1] = _cache.SaveField(ruleField.Id, ruleField.Name, ruleField.Label, ruleField.MaxLength, ruleField.InitialValue, ruleField.Required, ruleField.Type, ruleField.FieldValues, ruleField.Placeholder, ruleField.ValidPattern, overwrite, false).Id;
+											rule.Value = string.Join("$CP$", values);
+										}
+									}
+								}
+							}
+
+							// TODO: process behavioral rules data?
+
+							var newTargetGroup = _cache.SaveTargetGroup(targetGroup.Id, targetGroup.Name, targetGroup.Rules, targetGroup.BehavioralRules, overwrite, false);
+							variant.TargetGroupId = newTargetGroup.Id;
+
+							if (newTargetGroup.Id != targetGroup.Id || overwrite)
+							{
+								importSession.LogEntry("WCO", $"Imported target group {newTargetGroup.Name}", EventLogEntryType.Information);
+							}
+							else if (!overwrite)
+							{
+								importSession.LogEntry("WCO", $"Skipped target group {newTargetGroup.Name}", EventLogEntryType.Information);
+							}
+
+						}
+
+						// Process each form used in the EmbedCode
+						variant.EmbedCode = reForm.Replace(variant.EmbedCode, (match) =>
+						{
+							var formNode = node.OwnerDocument.SelectSingleNode("/assets/form[id='" + match.Groups["formid"].Value + "']");
+							var form = WcoXmlHelper.ImportForm(formNode);
+
+							// Handle the connector (if any) that each form uses
+							var connectorField = form.HiddenFields.FirstOrDefault(f => f.Key == "WcoConnectorId");
+							if (connectorField != null)
+							{
+								var connectorNode = node.OwnerDocument.SelectSingleNode("/assets/connector[id='" + connectorField.Value + "']");
+								var connector = WcoXmlHelper.ImportConnector(connectorNode);
+
+								var newConnector = _cache.SaveConnector(connector.Id, connector.Name, connector.Type, connector.Url, connector.Fields, overwrite, false);
+								connectorField.Value = newConnector.Id;
+
+								if (newConnector.Id != connector.Id || overwrite)
+								{
+									importSession.LogEntry("WCO", $"Imported connector {connector.Name}", EventLogEntryType.Information);
+								}
+								else if (!overwrite)
+								{
+									importSession.LogEntry("WCO", $"Skipped connector {connector.Name}", EventLogEntryType.Information);
+								}
+							}
+
+							// Handle the fields that each form uses
+							foreach (var element in form.FormElements)
+							{
+								var fieldNode = node.OwnerDocument.SelectSingleNode("/assets/field[name='" + element.Key + "']");
+								var thisField = WcoXmlHelper.ImportField(fieldNode);
+
+								_cache.SaveField(thisField.Id, thisField.Name, thisField.Label, thisField.MaxLength, thisField.InitialValue, thisField.Required, thisField.Type, thisField.FieldValues, thisField.Placeholder, thisField.ValidPattern, overwrite, false);
+							}
+
+							var newForm = _cache.SaveForm(form.Id, form.Name, form.FormElements, form.HiddenFields, form.Secure, form.DoNotStoreSubmissionData, form.ValidateEmailRecipientsAgainstWhiteList, overwrite, false);
+
+							if (newForm.Id != form.Id || overwrite)
+							{
+								importSession.LogEntry("WCO", $"Imported form {form.Name}", EventLogEntryType.Information);
+							}
+							else if (!overwrite)
+							{
+								importSession.LogEntry("WCO", $"Skipped form {form.Name}", EventLogEntryType.Information);
+							}
+
+							return match.Value.Replace(match.Groups["formid"].Value, newForm.Id);
+						});
+
+						// Attach to the new asset id
+						variant.CMSAssetId = asset.id;
+						variant.IsCMSManaged = true;
+					}
+
+					// Now we can create/update the snippet
+					var newSnippet = _cache.SaveSnippet(snippet.Id, snippet.Name, snippet.Variants, overwrite, false);
+
+					if (newSnippet == null)
+					{
+						importSession.LogEntry("WCO", $"Error importing snippet {snippet.Name}", EventLogEntryType.Error);
+					}
+					if (newSnippet.Id != snippet.Id || overwrite)
+					{
+						importSession.LogEntry("WCO", $"Imported snippet {snippet.Name}", EventLogEntryType.Information);
+					}
+					else if (!overwrite)
+					{
+						importSession.LogEntry("WCO", $"Skipped snippet {snippet.Name}", EventLogEntryType.Information);
+					}
+				}
+			}
 		}
 
 		public WorklistAsset GetAsset(int id, bool ensurePath = false)

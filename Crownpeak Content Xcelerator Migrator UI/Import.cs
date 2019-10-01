@@ -80,7 +80,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			{
 				if (_migrationEngine == null)
 				{
-					_migrationEngine = new MigrationEngineWrapper(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text);
+					_migrationEngine = new MigrationEngineWrapper(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text, rbWcoYes.Checked, txtWcoUsername.Text, txtWcoPassword.Text);
 				}
 			}
 			catch
@@ -256,7 +256,19 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 						Common.ShowWarning("Please enter a password");
 						result = false;
 					}
-					else if (!MigrationEngineWrapper.Authenticate(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text))
+					else if (rbWcoYes.Checked && string.IsNullOrWhiteSpace(txtWcoUsername.Text))
+					{
+						txtWcoUsername.Select();
+						Common.ShowWarning("Please enter a WCO username");
+						result = false;
+					}
+					else if (rbWcoYes.Checked && string.IsNullOrWhiteSpace(txtWcoPassword.Text))
+					{
+						txtWcoPassword.Select();
+						Common.ShowWarning("Please enter a WCO password");
+						result = false;
+					}
+					else if (!MigrationEngineWrapper.Authenticate(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text, rbWcoYes.Checked, txtWcoUsername.Text, txtWcoPassword.Text))
 					{
 						Common.ShowWarning("Please check your credentials");
 						result = false;
@@ -359,20 +371,32 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 				txtInstance.Text = lastSession.Instance;
 				txtDeveloperKey.Text = lastSession.Key;
 				txtUsername.Text = lastSession.Username;
+				txtPassword.Text = "";
 				txtPassword.Select();
+				txtWcoUsername.Text = lastSession.WcoUsername;
+				txtWcoPassword.Text = "";
+				if (!string.IsNullOrWhiteSpace(txtWcoUsername.Text))
+					rbWcoYes.Checked = true;
+				else
+					rbWcoNo.Checked = true;
 			}
 		}
 
 		private void SaveConnection()
 		{
-			AppSettings.SaveConnection(new CmsInstance()
+			var cmsInstance = new CmsInstance()
 			{
 				Server = txtServer.Text,
 				Instance = txtInstance.Text,
 				Key = txtDeveloperKey.Text,
 				Username = txtUsername.Text,
-				Password = ""
-			}, SettingsType.ForImport);
+				Password = "",
+				WcoUsername = "",
+				WcoPassword = ""
+			};
+			if (rbWcoYes.Checked && !string.IsNullOrWhiteSpace(txtWcoUsername.Text))
+				cmsInstance.WcoUsername = txtWcoUsername.Text;
+			AppSettings.SaveConnection(cmsInstance, SettingsType.ForImport);
 		}
 
 		private void UntickItems(int[] ids)
@@ -443,7 +467,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 
 		private void btnVerify_Click(object sender, EventArgs e)
 		{
-			if (MigrationEngineWrapper.Authenticate(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text))
+			if (MigrationEngineWrapper.Authenticate(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text, rbWcoYes.Checked, txtWcoUsername.Text, txtWcoPassword.Text))
 			{
 				Common.ShowInformation("Details verified successfully", "Success");
 				SaveConnection();
@@ -493,8 +517,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 
 		private void btnRefresh_Click(object sender, EventArgs e)
 		{
-			var migrationWrapper = new MigrationEngineWrapper(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text,
-				txtUsername.Text, txtPassword.Text);
+			var migrationWrapper = new MigrationEngineWrapper(txtServer.Text, txtInstance.Text, txtDeveloperKey.Text, txtUsername.Text, txtPassword.Text, rbWcoYes.Checked, txtWcoUsername.Text, txtWcoPassword.Text);
 
 			treeViewAssets.Nodes.Clear();
 			try
@@ -565,6 +588,8 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 				txtDeveloperKey.Text = item.Key;
 				txtUsername.Text = item.Username;
 				txtPassword.Text = "";
+				txtWcoUsername.Text = item.WcoUsername;
+				txtWcoPassword.Text = "";
 			}
 		}
 
@@ -583,7 +608,10 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 						&& !string.IsNullOrWhiteSpace(txtInstance.Text)
 						&& !string.IsNullOrWhiteSpace(txtDeveloperKey.Text)
 						&& !string.IsNullOrWhiteSpace(txtUsername.Text)
-						&& !string.IsNullOrWhiteSpace(txtPassword.Text))
+						&& !string.IsNullOrWhiteSpace(txtPassword.Text)
+						&& (rbWcoNo.Checked
+						    || (!string.IsNullOrWhiteSpace(txtWcoUsername.Text)
+						        && !string.IsNullOrWhiteSpace(txtWcoPassword.Text))))
 				{
 					tabWizard.SelectedIndex++;
 				}
@@ -793,6 +821,20 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			}
 		}
 
+		private void RbWcoYes_CheckedChanged(object sender, EventArgs e)
+		{
+			EnableWcoControls(rbWcoYes.Checked);
+		}
+
+		private void RbWcoNo_CheckedChanged(object sender, EventArgs e)
+		{
+			EnableWcoControls(rbWcoYes.Checked);
+		}
+
+		private void EnableWcoControls(bool enable)
+		{
+			lblWcoUsername.Enabled = lblWcoPassword.Enabled = txtWcoUsername.Enabled = txtWcoPassword.Enabled = enable;
+		}
 		#endregion
 	}
 }

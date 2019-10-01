@@ -2,14 +2,25 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Xml;
 using CrownPeak.AccessApiHelper;
 using CrownPeak.AccessAPI;
+using Crownpeak.WcoApiHelper;
+using Connector = Crownpeak.WcoApiHelper.Connector;
+using Field = Crownpeak.WcoApiHelper.Field;
+using FieldType = Crownpeak.WcoApiHelper.FieldType;
+using FieldValue = Crownpeak.WcoApiHelper.FieldValue;
+using FieldValueUpper = Crownpeak.WcoApiHelper.FieldValueUpper;
+using Form = Crownpeak.WcoApiHelper.Form;
+using TargetGroup = Crownpeak.WcoApiHelper.TargetGroup;
+using Variant = Crownpeak.ContentXcelerator.Migrator.Wco.Variant;
 
 namespace Crownpeak.ContentXcelerator.Migrator
 {
 	class CmsAssetCache
 	{
 		private CmsApi _api;
+		private WcoApi _wco;
 		private int _cacheSize;
 		private List<int> _queue;
 		private Dictionary<int, WorklistAsset> _assetsById;
@@ -25,17 +36,26 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		private Dictionary<int, List<PublishingProperties>> _publishingProperties;
 		private Dictionary<int, string> _publishingPackages;
 		private Dictionary<int, string> _states;
+		// Wco
+		private Dictionary<string, WcoApiHelper.Snippet> _snippetsById;
+		private Dictionary<string, Wco.Variant> _variantsById;
+		private Dictionary<string, string> _variantsByNewId;
+		private Dictionary<string, WcoApiHelper.Form> _formsById;
+		private Dictionary<string, WcoApiHelper.Field> _fieldsById;
+		private Dictionary<string, WcoApiHelper.TargetGroup> _targetGroupsById;
+		private Dictionary<string, WcoApiHelper.Connector> _connectorsById;
 
-		public CmsAssetCache(int size, CmsApi api)
+		public CmsAssetCache(int size, CmsApi api, WcoApi wco)
 		{
 			Debug.WriteLine("Cache create with {0} items", size);
-			Reset(size, api);
+			Reset(size, api, wco);
 		}
 
-		public void Reset(int size, CmsApi api)
+		public void Reset(int size, CmsApi api, WcoApi wco)
 		{
 			Debug.WriteLine("Cache reset with {0} items", size);
 			_api = api;
+			_wco = wco;
 			_cacheSize = size;
 			_queue = new List<int>(size);
 			_assetsById = new Dictionary<int, WorklistAsset>();
@@ -51,6 +71,14 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			_publishingProperties = new Dictionary<int, List<PublishingProperties>>();
 			_publishingPackages = new Dictionary<int, string>();
 			_states = new Dictionary<int, string>();
+
+			_snippetsById = new Dictionary<string, WcoApiHelper.Snippet>();
+			_variantsById = new Dictionary<string, Wco.Variant>();
+			_variantsByNewId = new Dictionary<string, string>();
+			_formsById = new Dictionary<string, WcoApiHelper.Form>();
+			_fieldsById = new Dictionary<string, WcoApiHelper.Field>();
+			_targetGroupsById = new Dictionary<string, WcoApiHelper.TargetGroup>();
+			_connectorsById = new Dictionary<string, WcoApiHelper.Connector>();
 		}
 
 		public WorklistAsset GetAsset(int id, bool ensurePath = false)
@@ -137,11 +165,11 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			return null;
 		}
 
-		public WorklistAsset UpdateAsset(WorklistAsset asset, Dictionary<string, string> fields)
+		public WorklistAsset UpdateAsset(WorklistAsset asset, Dictionary<string, string> fields, List<string> fieldsToDelete)
 		{
 			WorklistAsset assetOut;
 			// TODO: this will add fields, but not remove existing ones
-			if (_api.Asset.Update(asset.id, fields, out assetOut))
+			if (_api.Asset.Update(asset.id, fields, out assetOut, fieldsToDelete))
 			{
 				UpdateAssetCache(assetOut.id, assetOut);
 				return assetOut;
@@ -505,6 +533,135 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					_pathsById.Add(id, asset.FullPath);
 				}
 			}
+		}
+
+		public WcoApiHelper.Snippet GetSnippetByOldId(string id)
+		{
+			return _snippetsById.ContainsKey(id) ? _snippetsById[id] : null;
+		}
+
+		public Dictionary<string, WcoApiHelper.Snippet> GetSnippets()
+		{
+			return _snippetsById;
+		}
+
+		public WcoApiHelper.Variant GetVariantByOldId(string id)
+		{
+			return _variantsById.ContainsKey(id) ? _variantsById[id] : null;
+		}
+
+		public string GetOldVariantIdByNewId(string id)
+		{
+			return _variantsByNewId.ContainsKey(id) ? _variantsByNewId[id] : null;
+		}
+
+		public WcoApiHelper.Form GetFormByOldId(string id)
+		{
+			return _formsById.ContainsKey(id) ? _formsById[id] : null;
+		}
+
+		public WcoApiHelper.Snippet SaveSnippet(string id, string name, WcoApiHelper.Variant[] variants, bool overwrite, bool bustCache)
+		{
+			if (!_snippetsById.ContainsKey(id) || bustCache)
+			{
+				var success = _wco.Snippets.SaveSnippet(_snippetsById.ContainsKey(id) ? _snippetsById[id].Id : Guid.Empty.ToString(), variants, overwrite, out var snippet);
+				if (success)
+				{
+					if (!_snippetsById.ContainsKey(id))
+						_snippetsById.Add(id, snippet);
+					else
+						_snippetsById[id] = snippet;
+
+					// We also need to populate the variants lookup
+					if (_wco.Snippets.GetSnippetWithVariants(snippet.Id, true, out var newVariants))
+					{
+						foreach (var variant in variants)
+						{
+							if (variant is Wco.Variant)
+							{
+								var wcoVariant = (Wco.Variant)variant;
+								var newVariant = newVariants.Single(v => v.Order == variant.Order);
+								if (!string.IsNullOrEmpty(wcoVariant.OriginalId))
+								{
+									if (!_variantsById.ContainsKey(wcoVariant.OriginalId))
+										_variantsById.Add(wcoVariant.OriginalId, new Wco.Variant(newVariant));
+									else
+										_variantsById[wcoVariant.OriginalId] = new Wco.Variant(newVariant);
+									if (!_variantsByNewId.ContainsKey(newVariant.Id))
+										_variantsByNewId.Add(newVariant.Id, wcoVariant.OriginalId);
+									else
+										_variantsByNewId[newVariant.Id] = wcoVariant.OriginalId;
+								}
+							}
+						}
+					}
+				}
+			}
+			return _snippetsById[id];
+		}
+
+		public WcoApiHelper.Connector SaveConnector(string id, string name, int type, string url, WcoApiHelper.FieldValue[] values, bool overwrite, bool bustCache)
+		{
+			if (!_connectorsById.ContainsKey(id) || bustCache)
+			{
+				var success = _wco.Connectors.SaveConnector(_connectorsById.ContainsKey(id) ? _connectorsById[id].Id : Guid.Empty.ToString(), name, type, url, values, overwrite, out var connector);
+				if (success)
+				{
+					if (!_connectorsById.ContainsKey(id))
+						_connectorsById.Add(id, connector);
+					else
+						_connectorsById[id] = connector;
+				}
+			}
+			return _connectorsById[id];
+		}
+
+		public WcoApiHelper.Field SaveField(string id, string name, string label, int maxLength, string initialValue, bool required, WcoApiHelper.FieldType type, WcoApiHelper.FieldValue[] values, string placeholder, string validPattern, bool overwrite, bool bustCache)
+		{
+			if (!_fieldsById.ContainsKey(id) || bustCache)
+			{
+				var success = _wco.Fields.SaveField(_fieldsById.ContainsKey(id) ? _fieldsById[id].Id : Guid.Empty.ToString(), name, label, maxLength, initialValue, required, type, values, placeholder, validPattern, overwrite, out var field);
+				if (success)
+				{
+					if (!_fieldsById.ContainsKey(id))
+						_fieldsById.Add(id, field);
+					else
+						_fieldsById[id] = field;
+				}
+			}
+			return _fieldsById[id];
+		}
+
+		public WcoApiHelper.Form SaveForm(string id, string name, WcoApiHelper.FieldValue[] formElements, WcoApiHelper.FieldValueUpper[] hiddenFields, bool secure, bool doNotStoreSubmissionData, bool validateEmailRecipientsAgainstWhiteList, bool overwrite, bool bustCache)
+		{
+			if (!_formsById.ContainsKey(id) || bustCache)
+			{
+				var success = _wco.Forms.SaveForm(_formsById.ContainsKey(id) ? _formsById[id].Id : Guid.Empty.ToString(), name, formElements, hiddenFields, secure, doNotStoreSubmissionData, validateEmailRecipientsAgainstWhiteList, overwrite, out var form);
+				if (success)
+				{
+					if (!_formsById.ContainsKey(id))
+						_formsById.Add(id, form);
+					else
+						_formsById[id] = form;
+				}
+			}
+			return _formsById[id];
+		}
+
+		public WcoApiHelper.TargetGroup SaveTargetGroup(string id, string name, WcoApiHelper.Rule[] rules, WcoApiHelper.BehavioralRule[] behavioralRules, bool overwrite, bool bustCache)
+		{
+			if (!_targetGroupsById.ContainsKey(id) || bustCache)
+			{
+				var success = _wco.TargetGroups.SaveTargetGroup(_targetGroupsById.ContainsKey(id) ? _targetGroupsById[id].Id : Guid.Empty.ToString(), name, rules, behavioralRules, overwrite, out var targetGroup);
+				if (success)
+				{
+					if (!_targetGroupsById.ContainsKey(id))
+						_targetGroupsById.Add(id, targetGroup);
+					else
+						_targetGroupsById[id] = targetGroup;
+				}
+			}
+			return _targetGroupsById[id];
 		}
 	}
 }
