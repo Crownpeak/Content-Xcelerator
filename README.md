@@ -19,7 +19,10 @@ Upon first execution of Content Xcelerator℠, you are required to enter configu
 * **Instance** – The DXM Instance that you wish to target;
 * **Username** – Your DXM username, typically your email address;
 * **Password** – Your DXM password;
-* **Developer Key** – Your personal DXM Developer Key. You should contact Crownpeak Support (support@crownpeak.com) if you do not have this.
+* **Developer Key** – Your personal DXM Developer Key. You should contact Crownpeak Support (support@crownpeak.com) if you do not have this;
+* **WCO Username** - The WCO username;
+* **WCO Password** - The WCO password. You should contact Crownpeak Support 
+(support@crownpeak.com) if you wish to export using WCO.
 
 **N.B.** Content Xcelerator℠ does not support Federated Authentication. A forms-based user account, with sufficient permission, must be provided.
 
@@ -49,7 +52,10 @@ Upon first execution of Content Xcelerator℠, you are required to enter configu
 * **Instance** – The DXM Instance that you wish to target;
 * **Username** – Your DXM username, typically your email address;
 * **Password** – Your DXM password;
-* **Developer Key** – Your personal DXM Developer Key. You should contact Crownpeak Support (support@crownpeak.com) if you do not have this.
+* **Developer Key** – Your personal DXM Developer Key. You should contact Crownpeak Support (support@crownpeak.com) if you do not have this;
+* **WCO Username** - The WCO username;
+* **WCO Password** - The WCO password. You should contact Crownpeak Support 
+(support@crownpeak.com) if you wish to export using WCO.
 
 **N.B.** Content Xcelerator℠ does not support Federated Authentication. A forms-based user account, with sufficient permission, must be provided.
 
