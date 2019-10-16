@@ -1580,6 +1580,8 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					else
 					{
 						var adjustedTemplateLanguage = templateLanguage ?? -1;
+						// VB templates are no longer allowed
+						if (templateId == 759) templateId = 1792;
 						// This is how we pass in a map to DeveloperCS
 						if (templateId == 1792) templateId = 0;
 						if (templateId == 0) adjustedTemplateLanguage = 1;
@@ -1600,6 +1602,28 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						}
 						else
 						{
+							// Disallow different models on templates
+							if (assetType.HasFlag(CmsAssetType.TemplateFolder) && modelId != null)
+							{
+								modelId = null;
+							}
+
+							// Null subtype is not allowed for template folders
+							if (assetType.HasFlag(CmsAssetType.TemplateFolder) && subtype == null)
+							{
+								subtype = 512;
+							}
+
+							// Some content has templates containing templates, which is illegal
+							// Make sure to get the right template subtype
+							if (subtype == 512 || subtype == 256)
+							{
+								var folderChildCount = node.OwnerDocument.SelectNodes("//folder[folder_id='" + node.SelectSingleNode("id").InnerText + "']").Count;
+								var fileChildCount = node.OwnerDocument.SelectNodes("//asset[folder_id='" + node.SelectSingleNode("id").InnerText + "']").Count;
+								if (subtype == 512 && folderChildCount > 0 && fileChildCount == 0) subtype = 256;
+								else if (subtype == 256 && folderChildCount == 0 && fileChildCount > 0) subtype = 512;
+							}
+
 							// Create a new asset
 							asset = _cache.CreateAsset(label, folderId, modelId ?? -1,
 								type, subtype, adjustedTemplateLanguage, templateId ?? 0,
