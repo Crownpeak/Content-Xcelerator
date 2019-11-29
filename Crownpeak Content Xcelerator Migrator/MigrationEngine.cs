@@ -944,7 +944,8 @@ namespace Crownpeak.ContentXcelerator.Migrator
 									if (resourceUsingModel != null)
 									{
 										resourceUsingModel.ModelId = asset.id;
-										if (resourceUsingModel.Asset != null)
+										if (resourceUsingModel.Asset != null && !resourceUsingModel.AssetType.HasFlag(CmsAssetType.ContentAsset)
+												 && !resourceUsingModel.AssetType.HasFlag(CmsAssetType.DigitalAsset))
 										{
 											// We should also set the model on the asset that was already created
 											try
@@ -1586,6 +1587,12 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						if (templateId == 1792) templateId = 0;
 						if (templateId == 0) adjustedTemplateLanguage = 1;
 
+						// Content assets inside a template folder must be template files
+						if (type == 2 && subtype != 17 && assetType.HasFlag(CmsAssetType.Template))
+						{
+							subtype = 17;
+						}
+
 						if (assetType.HasFlag(CmsAssetType.DigitalAsset) && string.IsNullOrWhiteSpace(base64data))
 						{
 							// We can't support zero-byte uploads
@@ -1711,6 +1718,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		{
 			if (_wco == null) return;
 
+			var firstSnippet = true;
 			foreach (var field in fields.Where(f => f.Key.StartsWith("omm")))
 			{
 				if (field.Key.StartsWith("ommsnippetid#") && !string.IsNullOrWhiteSpace(field.Value))
@@ -1840,6 +1848,19 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					else if (!overwrite)
 					{
 						importSession.LogEntry("WCO", $"Skipped snippet {snippet.Name}", EventLogEntryType.Information);
+					}
+
+					if (firstSnippet && newSnippet != null)
+					{
+						var variant = new WcoVariantSelection
+						{
+							FieldName = "",
+							SnippetId = newSnippet.SnippetId,
+							VariantId = newSnippet.SnippetId,
+							VariantType = 0
+						};
+						_api.Asset.UpdateInput(asset.id, new Dictionary<string, string>(), new string[0], new AssetUpdateInputWcoVariant[0], new WcoSnippetDetachment[0], variant);
+						firstSnippet = false;
 					}
 				}
 			}

@@ -572,8 +572,11 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					else
 						_snippetsById[id] = snippet;
 
+					// Insert again as WCO often doesn't respond with details after the first attempt
+					_wco.Snippets.SaveSnippet(_snippetsById.ContainsKey(id) ? _snippetsById[id].Id : Guid.Empty.ToString(), variants, overwrite, out snippet);
+
 					// We also need to populate the variants lookup
-					if (_wco.Snippets.GetSnippetWithVariants(snippet.Id, true, out var newVariants))
+					if (_wco.Snippets.GetSnippetWithVariants(snippet.SnippetId, true, out var newVariants))
 					{
 						foreach (var variant in variants)
 						{
