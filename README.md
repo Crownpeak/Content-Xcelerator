@@ -7,8 +7,12 @@ Constructed as a set of Microsoft .NET Visual Studio Projects, producing a Micro
 
 Content Xcelerator℠ is not actively maintained by Crownpeak. The underlying DXM Access API (“Access API”), invoked by Content Xcelerator℠, forms part of the DXM product itself, which is fully maintained by Crownpeak.
 
+## Building Content Xcelerator℠
+To build Content Xcelerator℠, open the "Crownpeak Content Xcelerator.sln" file in Microsoft Visual Studio, and build the "Crownpeak Content Xcelerator Migrator UI" project.
+
 ## Executing Content Xcelerator℠
-To run Content Xcelerator℠, execute the Microsoft Windows Executable from within a Microsoft Windows environment.
+To run Content Xcelerator℠, execute the Microsoft Windows Executable from within a Microsoft Windows environment. A pre-built executable can be found in the "build" folder in this repository.
+
 ![Executing Content Xcelerator℠](images/screenshots/content-xcelerator-executing.png?raw=true "Executing Content Xcelerator℠")
 
 ## Exporting Data from DXM
