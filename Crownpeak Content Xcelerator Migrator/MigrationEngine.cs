@@ -426,6 +426,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						node.AppendChildElement("branch_id", asset.branchId);
 
 					var fields = node.AppendChild(xml.CreateElement("fields"));
+					IEnumerable<Attachment> attachments = null;
 
 					foreach (var kvp in fieldCollection)
 					{
@@ -553,6 +554,26 @@ namespace Crownpeak.ContentXcelerator.Migrator
 												}
 											}
 										}
+									}
+								}
+							}
+						}
+
+						if (kvp.Key.StartsWith("upload#") && kvp.Value.IndexOf("/upload/") > 0)
+						{
+							if (attachments == null)
+							{
+								_api.AssetProperties.GetAttachments(asset.id, out attachments);
+							}
+
+							if (attachments != null && attachments.Any())
+							{
+								var attachment = attachments.FirstOrDefault(a => a.PreviewUrl == kvp.Value);
+								if (attachment != null)
+								{
+									if (_api.Asset.DownloadAttachmentBase64(attachment.PreviewUrl, out var attachmentContent))
+									{
+										field.AppendChild(xml.CreateElement("binaryContent")).InnerText = attachmentContent;
 									}
 								}
 							}
@@ -1324,8 +1345,10 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				{
 					var name = GetNodeStringValue(fieldNode.SelectSingleNode("name"));
 					var value = GetNodeStringValue(fieldNode.SelectSingleNode("value"));
+					var binaryContent = GetNodeStringValue(fieldNode.SelectSingleNode("binaryContent"));
 					if (!string.IsNullOrWhiteSpace(name))
 					{
+						if (binaryContent != null) value = binaryContent;
 						if (value == null) value = "";
 						if (!fields.ContainsKey(name))
 							fields.Add(name, value);

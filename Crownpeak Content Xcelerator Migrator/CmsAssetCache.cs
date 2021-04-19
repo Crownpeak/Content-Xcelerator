@@ -168,6 +168,9 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		public WorklistAsset UpdateAsset(WorklistAsset asset, Dictionary<string, string> fields, List<string> fieldsToDelete)
 		{
 			WorklistAsset assetOut;
+
+			ProcessAttachmentsFields(asset, fields);
+
 			// TODO: this will add fields, but not remove existing ones
 			if (_api.Asset.Update(asset.id, fields, out assetOut, fieldsToDelete))
 			{
@@ -193,6 +196,8 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				if (_api.Asset.Create(label, folderId, modelId, type, templateLanguage, templateId, workflowId, out asset, subtype))
 				{
 					if (fields == null || fields.Count == 0) return asset;
+
+					ProcessAttachmentsFields(asset, fields);
 
 					if (_api.Asset.Update(asset.id, fields, out asset))
 					{
@@ -271,6 +276,30 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			return null;
 		}
 
+		private void ProcessAttachmentsFields(WorklistAsset asset, Dictionary<string, string> fields)
+		{
+			if (fields == null || !fields.Any()) return;
+
+			var uploadFields = fields.Where(f => f.Key.StartsWith("upload#") && !string.IsNullOrWhiteSpace(f.Value)).ToArray();
+			foreach (var field in uploadFields)
+			{
+				var key = field.Key;
+				var value = field.Value;
+				if (value.IndexOf("/cpt_internal/") < 0 && value.IndexOf("/upload/") < 0)
+				{
+					var keySuffix = key.Substring(7); // Remove the leading "upload#"
+					if (fields.ContainsKey("upload_name#" + keySuffix))
+					{
+						var originalFilename = fields["upload_name#" + keySuffix];
+						if (_api.Asset.AttachV2(asset.id, originalFilename, Convert.FromBase64String(value), out var displayUrl))
+						{
+							fields[key] = displayUrl;
+						}
+					}
+				}
+			}
+		}
+		
 		public void AddList(IEnumerable<WorklistAsset> assets)
 		{
 			foreach (var asset in assets)
