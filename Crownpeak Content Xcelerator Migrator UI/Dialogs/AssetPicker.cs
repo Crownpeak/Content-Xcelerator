@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CrownPeak.AccessApiHelper;
 using CrownPeak.AccessAPI;
 
 namespace Crownpeak.ContentXcelerator.Migrator.UI.Dialogs
