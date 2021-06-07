@@ -1002,7 +1002,8 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				&& r.Asset != null
 				&& (r.AssetType.HasFlag(CmsAssetType.ContentAsset)
 					|| r.AssetType.HasFlag(CmsAssetType.LibraryClass)
-					|| r.AssetType.HasFlag(CmsAssetType.Template))).ToList();
+					|| r.AssetType.HasFlag(CmsAssetType.Template)
+					|| r.AssetType.HasFlag(CmsAssetType.Workflow))).ToList();
 			if (!resourcesForRelinking.Any()) return;
 
 			importSession.LogEntry("", "Starting relinking.", EventLogEntryType.Information);
@@ -1017,57 +1018,94 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				var node = xml.SelectSingleNode("//asset[id='" + originalAssetId + "']");
 				if (node != null)
 				{
-					var originalFields = GetFields(node);
-					var fields = new Dictionary<string, string>();
-					var fieldsToDelete = new List<string>();
-					foreach (var field in originalFields)
+					if (resource.AssetType.HasFlag(CmsAssetType.Workflow))
 					{
-						if (ReplaceLinks(importSession, field.Value, out var newValue))
+						WorkflowAsset workflow;
+						var workflowUpdated = false;
+						_api.Workflow.ReadFull(resource.Asset.id, out workflow);
+						foreach (XmlNode stepNode in node.SelectNodes("workflow/steps/step"))
 						{
-							fields.Add(field.Key, newValue);
-						}
-					}
-
-					foreach (var field in originalFields.Where(f => f.Key.StartsWith("ommsnippetid#")))
-					{
-						var newSnippet = _cache.GetSnippetByOldId(field.Value);
-						if (newSnippet != null)
-						{
-							fields.Add(field.Key, newSnippet.Id);
-							// Now find the original variants
-							foreach (XmlNode variantNode in xml.SelectNodes("/assets/snippet[id='" + field.Value + "']/variants/variant"))
+							var stepNumber = int.Parse(stepNode.SelectSingleNode("step").InnerText);
+							var workflowStep = workflow.Steps.FirstOrDefault(s => s.Step == stepNumber);
+							if (workflowStep != null)
 							{
-								var oldVariantId = variantNode.SelectSingleNode("id").InnerText;
-								var newVariant = _cache.GetVariantByOldId(oldVariantId);
-								if (newVariant != null)
+								var execFilePath = stepNode.SelectSingleNode("execFilePath").InnerText;
+								if (!string.IsNullOrWhiteSpace(execFilePath))
 								{
-									var content = originalFields.ContainsKey("ommvarcont#" + oldVariantId) ? originalFields["ommvarcont#" + oldVariantId] : newVariant.EmbedCode;
-									if (ReplaceLinks(importSession, content, out var updatedContent))
+									var newScript = _cache.GetAsset(execFilePath);
+									if (newScript != null)
 									{
-										content = updatedContent;
+										workflowUpdated = true;
+										workflowStep.ExecFile = newScript.id;
+										workflowStep.ExecFilePath = newScript.FullPath;
 									}
-									fields.Add("ommvarcont#" + newVariant.Id, content);
-									fieldsToDelete.Add("ommvarcont#" + oldVariantId);
-									if (fields.ContainsKey("ommvarcont#" + oldVariantId)) fields.Remove("ommvarcont#" + oldVariantId);
 								}
 							}
 						}
-					}
 
-					foreach (var field in originalFields.Where(f => f.Key.StartsWith("ommvariantid#")))
-					{
-						var newVariant = _cache.GetVariantByOldId(field.Value);
-						if (newVariant != null)
+						if (workflowUpdated)
 						{
-							fields.Add(field.Key, newVariant.Id);
+							_api.Workflow.Update(workflow, out _);
 						}
 					}
-
-					if (fields.Count > 0)
+					else
 					{
-						// Save our changes
-						_cache.UpdateAsset(resource.Asset, fields, fieldsToDelete);
-						importSession.LogEntry("Asset: " + resource.Asset.id, $"Relinked {fields.Count} field(s)", EventLogEntryType.Information);
+						var originalFields = GetFields(node);
+						var fields = new Dictionary<string, string>();
+						var fieldsToDelete = new List<string>();
+						foreach (var field in originalFields)
+						{
+							if (ReplaceLinks(importSession, field.Value, out var newValue))
+							{
+								fields.Add(field.Key, newValue);
+							}
+						}
+
+						foreach (var field in originalFields.Where(f => f.Key.StartsWith("ommsnippetid#")))
+						{
+							var newSnippet = _cache.GetSnippetByOldId(field.Value);
+							if (newSnippet != null)
+							{
+								fields.Add(field.Key, newSnippet.Id);
+								// Now find the original variants
+								foreach (XmlNode variantNode in xml.SelectNodes("/assets/snippet[id='" + field.Value +
+								                                                "']/variants/variant"))
+								{
+									var oldVariantId = variantNode.SelectSingleNode("id").InnerText;
+									var newVariant = _cache.GetVariantByOldId(oldVariantId);
+									if (newVariant != null)
+									{
+										var content = originalFields.ContainsKey("ommvarcont#" + oldVariantId)
+											? originalFields["ommvarcont#" + oldVariantId]
+											: newVariant.EmbedCode;
+										if (ReplaceLinks(importSession, content, out var updatedContent))
+										{
+											content = updatedContent;
+										}
+
+										fields.Add("ommvarcont#" + newVariant.Id, content);
+										fieldsToDelete.Add("ommvarcont#" + oldVariantId);
+										if (fields.ContainsKey("ommvarcont#" + oldVariantId)) fields.Remove("ommvarcont#" + oldVariantId);
+									}
+								}
+							}
+						}
+
+						foreach (var field in originalFields.Where(f => f.Key.StartsWith("ommvariantid#")))
+						{
+							var newVariant = _cache.GetVariantByOldId(field.Value);
+							if (newVariant != null)
+							{
+								fields.Add(field.Key, newVariant.Id);
+							}
+						}
+
+						if (fields.Count > 0)
+						{
+							// Save our changes
+							_cache.UpdateAsset(resource.Asset, fields, fieldsToDelete);
+							importSession.LogEntry("Asset: " + resource.Asset.id, $"Relinked {fields.Count} field(s)", EventLogEntryType.Information);
+						}
 					}
 				}
 			}
