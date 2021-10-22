@@ -138,6 +138,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			if (int.TryParse(idOrPath, out id))
 				return GetAsset(id);
 
+			idOrPath = idOrPath.Replace("//", "/");
 			if (_assetsByPath.ContainsKey(idOrPath))
 			{
 				Debug.WriteLine("Cache hit for path: " + idOrPath);
