@@ -202,6 +202,18 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			};
 		}
 
+		public static (byte[], string) ImportTargetGroupImage(XmlNode node)
+		{
+			var imageNode = node.SelectSingleNode("image");
+			if (imageNode != null)
+			{
+				return (Convert.FromBase64String(imageNode.SelectSingleNode("binaryContent").InnerText),
+					imageNode.SelectSingleNode("mimeType").InnerText);
+			}
+
+			return (Array.Empty<byte>(), string.Empty);
+		}
+
 		public static Wco.Variant ImportVariant(XmlNode node)
 		{
 			return new Wco.Variant

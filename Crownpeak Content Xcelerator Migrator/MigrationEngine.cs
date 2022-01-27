@@ -464,6 +464,12 @@ namespace Crownpeak.ContentXcelerator.Migrator
 												var targetGroupNode = top.AppendChild(xml.CreateElement("targetGroup"));
 												targetGroupNode.AppendChild(xml.CreateElement("id")).InnerText = targetGroup.Id;
 												targetGroupNode.AppendChild(xml.CreateElement("name")).InnerText = targetGroup.Name;
+												if (_wco.TargetGroups.GetTargetGroupImage(targetGroup.Id, out var imageBytes, out var imageType))
+												{
+													var imageNode = targetGroupNode.AppendChild(xml.CreateElement("image"));
+													imageNode.AppendChild(xml.CreateElement("mimeType")).InnerText = imageType;
+													imageNode.AppendChild(xml.CreateElement("binaryContent")).InnerText = Convert.ToBase64String(imageBytes);
+												}
 												if (targetGroup.Rules.Length > 0)
 												{
 													var rulesNode = targetGroupNode.AppendChild(xml.CreateElement("rules"));
@@ -1796,6 +1802,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						{
 							var targetGroupNode = node.OwnerDocument.SelectSingleNode("/assets/targetGroup[id='" + targetGroupId + "']");
 							var targetGroup = WcoXmlHelper.ImportTargetGroup(targetGroupNode);
+							var (targetGroupImage, targetGroupImageMimeType) = WcoXmlHelper.ImportTargetGroupImage(targetGroupNode);
 
 							// Handle the fields that each target group uses
 							foreach (var rule in targetGroup.Rules)
@@ -1827,7 +1834,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 							// TODO: process behavioral rules data?
 
-							var newTargetGroup = _cache.SaveTargetGroup(targetGroup.Id, targetGroup.Name, targetGroup.Rules, targetGroup.BehavioralRules, overwrite, false);
+							var newTargetGroup = _cache.SaveTargetGroup(targetGroup.Id, targetGroup.Name, targetGroup.Rules, targetGroup.BehavioralRules, targetGroupImage, targetGroupImageMimeType, overwrite, false);
 							variant.TargetGroupId = newTargetGroup.Id;
 
 							if (newTargetGroup.Id != targetGroup.Id || overwrite)

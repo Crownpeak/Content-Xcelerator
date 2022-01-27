@@ -681,7 +681,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			return _formsById[id];
 		}
 
-		public WcoApiHelper.TargetGroup SaveTargetGroup(string id, string name, WcoApiHelper.Rule[] rules, WcoApiHelper.BehavioralRule[] behavioralRules, bool overwrite, bool bustCache)
+		public WcoApiHelper.TargetGroup SaveTargetGroup(string id, string name, WcoApiHelper.Rule[] rules, WcoApiHelper.BehavioralRule[] behavioralRules, byte[] image, string mimeType, bool overwrite, bool bustCache)
 		{
 			if (!_targetGroupsById.ContainsKey(id) || bustCache)
 			{
@@ -692,6 +692,9 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						_targetGroupsById.Add(id, targetGroup);
 					else
 						_targetGroupsById[id] = targetGroup;
+
+					if (image.Length > 0)
+						_wco.TargetGroups.SaveTargetGroupImage(targetGroup.Id, image, mimeType);
 				}
 			}
 			return _targetGroupsById[id];
