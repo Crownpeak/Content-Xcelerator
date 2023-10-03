@@ -201,26 +201,17 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		{
 			try
 			{
-				string result;
-				using (var ms = new MemoryStream())
+				using (var fs = new FileStream(exportSession.FileLocation, FileMode.Create))
 				{
-					using (var xtw = new XmlTextWriter(ms, Encoding.Unicode))
+					using (var xtw = new XmlTextWriter(fs, Encoding.Unicode))
 					{
 						xtw.Formatting = Formatting.Indented;
 						xml.WriteContentTo(xtw);
 						xtw.Flush();
-						ms.Flush();
-
-						ms.Position = 0;
-
-						using (var sr = new StreamReader(ms))
-						{
-							result = sr.ReadToEnd();
-						}
+						fs.Flush();
 					}
 				}
 
-				File.WriteAllText(exportSession.FileLocation, result);
 				exportSession.LogEntry("", "Export File generated: " + exportSession.FileLocation, EventLogEntryType.Information);
 
 			}
