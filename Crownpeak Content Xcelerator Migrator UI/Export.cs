@@ -93,6 +93,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 				btnBack.Enabled = tabWizard.SelectedIndex > 0;
 				btnNext.Enabled = tabWizard.SelectedIndex < tabWizard.TabPages.Count - 1 || (_lastLog != null && _lastLog.Count > 0);
 				btnGo.Enabled = _loadsInProgress == 0 && !string.IsNullOrWhiteSpace(txtExportTo.Text);
+				cbxSeparateBinaries.Enabled = true;
 				btnSaveLog.Enabled = (_lastLog != null && _lastLog.Count > 0);
 
 				btnNext.Text = "&Next >";
@@ -252,6 +253,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 		private async void ExportData()
 		{
 			btnGo.Enabled = false;
+			cbxSeparateBinaries.Enabled = false;
 
 			var resources = _migrationEngine.GetCmsResources(treeViewAssets);
 			
@@ -259,7 +261,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			progressBar1.Visible = true;
 			progressBar1.Value = 0;
 			progressBar1.Maximum = 1;
-			var task = Task.Run(() => _migrationEngine.Export(txtExportTo.Text, ((CmsResource)treeViewAssets.Nodes[0].Tag).AssetId, cbxExportAssets.Checked, cbxExportLibraries.Checked, cbxExportModels.Checked, cbxExportTemplates.Checked, cbxExportBinaries.Checked, resources, OnItemProcessed));
+			var task = Task.Run(() => _migrationEngine.Export(txtExportTo.Text, ((CmsResource)treeViewAssets.Nodes[0].Tag).AssetId, cbxExportAssets.Checked, cbxExportLibraries.Checked, cbxExportModels.Checked, cbxExportTemplates.Checked, cbxExportBinaries.Checked, cbxSeparateBinaries.Checked, resources, OnItemProcessed));
 			await task;
 			_lastLog = task.Result;
 

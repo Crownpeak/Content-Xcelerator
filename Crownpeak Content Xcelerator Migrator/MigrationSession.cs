@@ -12,6 +12,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 		public bool IncludeModels { get; set; }
 		public bool IncludeContent { get; set; }
 		public bool IncludeBinaries { get; set; }
+		public bool SeparateBinaries { get; set; }
 
 		public IList<LogEntry> Log { get; set; }
 		public int TargetFolder { get; set; }

@@ -54,6 +54,7 @@
 			this.txtServer = new System.Windows.Forms.TextBox();
 			this.label1 = new System.Windows.Forms.Label();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
+			this.cbxExportBinaries = new System.Windows.Forms.CheckBox();
 			this.btnRefreshFolders = new System.Windows.Forms.Button();
 			this.treeViewAssets = new System.Windows.Forms.TreeView();
 			this.imageList1 = new System.Windows.Forms.ImageList(this.components);
@@ -77,7 +78,7 @@
 			this.label5 = new System.Windows.Forms.Label();
 			this.lblStatus = new System.Windows.Forms.Label();
 			this.progressBar1 = new System.Windows.Forms.ProgressBar();
-			this.cbxExportBinaries = new System.Windows.Forms.CheckBox();
+			this.cbxSeparateBinaries = new System.Windows.Forms.CheckBox();
 			this.tabWizard.SuspendLayout();
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
@@ -350,6 +351,18 @@
 			this.tabPage2.Text = "Assets";
 			this.tabPage2.UseVisualStyleBackColor = true;
 			// 
+			// cbxExportBinaries
+			// 
+			this.cbxExportBinaries.AutoSize = true;
+			this.cbxExportBinaries.Checked = true;
+			this.cbxExportBinaries.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.cbxExportBinaries.Location = new System.Drawing.Point(350, 33);
+			this.cbxExportBinaries.Name = "cbxExportBinaries";
+			this.cbxExportBinaries.Size = new System.Drawing.Size(63, 17);
+			this.cbxExportBinaries.TabIndex = 8;
+			this.cbxExportBinaries.Text = "Binaries";
+			this.cbxExportBinaries.UseVisualStyleBackColor = true;
+			// 
 			// btnRefreshFolders
 			// 
 			this.btnRefreshFolders.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -477,6 +490,7 @@
 			// 
 			// tabPage3
 			// 
+			this.tabPage3.Controls.Add(this.cbxSeparateBinaries);
 			this.tabPage3.Controls.Add(this.btnSaveLog);
 			this.tabPage3.Controls.Add(this.txtLog);
 			this.tabPage3.Controls.Add(this.btnGo);
@@ -497,7 +511,7 @@
 			this.btnSaveLog.Location = new System.Drawing.Point(494, 6);
 			this.btnSaveLog.Name = "btnSaveLog";
 			this.btnSaveLog.Size = new System.Drawing.Size(75, 23);
-			this.btnSaveLog.TabIndex = 5;
+			this.btnSaveLog.TabIndex = 6;
 			this.btnSaveLog.Text = "Save Log";
 			this.btnSaveLog.UseVisualStyleBackColor = true;
 			this.btnSaveLog.Click += new System.EventHandler(this.btnSaveLog_Click);
@@ -513,16 +527,16 @@
 			this.txtLog.ReadOnly = true;
 			this.txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
 			this.txtLog.Size = new System.Drawing.Size(558, 270);
-			this.txtLog.TabIndex = 4;
+			this.txtLog.TabIndex = 5;
 			// 
 			// btnGo
 			// 
 			this.btnGo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnGo.Enabled = false;
-			this.btnGo.Location = new System.Drawing.Point(350, 6);
+			this.btnGo.Location = new System.Drawing.Point(413, 6);
 			this.btnGo.Name = "btnGo";
 			this.btnGo.Size = new System.Drawing.Size(75, 23);
-			this.btnGo.TabIndex = 3;
+			this.btnGo.TabIndex = 4;
 			this.btnGo.Text = "Go";
 			this.btnGo.UseVisualStyleBackColor = true;
 			this.btnGo.Click += new System.EventHandler(this.btnGo_Click);
@@ -533,7 +547,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.txtExportTo.Location = new System.Drawing.Point(66, 7);
 			this.txtExportTo.Name = "txtExportTo";
-			this.txtExportTo.Size = new System.Drawing.Size(256, 20);
+			this.txtExportTo.Size = new System.Drawing.Size(204, 20);
 			this.txtExportTo.TabIndex = 1;
 			this.txtExportTo.TextChanged += new System.EventHandler(this.txtExportTo_TextChanged);
 			this.txtExportTo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtExportTo_KeyDown);
@@ -550,7 +564,7 @@
 			// btnExportTo
 			// 
 			this.btnExportTo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnExportTo.Location = new System.Drawing.Point(320, 6);
+			this.btnExportTo.Location = new System.Drawing.Point(268, 6);
 			this.btnExportTo.Name = "btnExportTo";
 			this.btnExportTo.Size = new System.Drawing.Size(24, 22);
 			this.btnExportTo.TabIndex = 2;
@@ -609,17 +623,16 @@
 			this.progressBar1.TabIndex = 15;
 			this.progressBar1.Visible = false;
 			// 
-			// cbxExportBinaries
+			// cbxSeparateBinaries
 			// 
-			this.cbxExportBinaries.AutoSize = true;
-			this.cbxExportBinaries.Checked = true;
-			this.cbxExportBinaries.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.cbxExportBinaries.Location = new System.Drawing.Point(350, 33);
-			this.cbxExportBinaries.Name = "cbxExportBinaries";
-			this.cbxExportBinaries.Size = new System.Drawing.Size(63, 17);
-			this.cbxExportBinaries.TabIndex = 8;
-			this.cbxExportBinaries.Text = "Binaries";
-			this.cbxExportBinaries.UseVisualStyleBackColor = true;
+			this.cbxSeparateBinaries.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.cbxSeparateBinaries.AutoSize = true;
+			this.cbxSeparateBinaries.Location = new System.Drawing.Point(298, 10);
+			this.cbxSeparateBinaries.Name = "cbxSeparateBinaries";
+			this.cbxSeparateBinaries.Size = new System.Drawing.Size(109, 17);
+			this.cbxSeparateBinaries.TabIndex = 3;
+			this.cbxSeparateBinaries.Text = "Separate Binaries";
+			this.cbxSeparateBinaries.UseVisualStyleBackColor = true;
 			// 
 			// Export
 			// 
@@ -697,5 +710,6 @@
 		private System.Windows.Forms.RadioButton rbWcoYes;
 		private System.Windows.Forms.Label label12;
 		private System.Windows.Forms.CheckBox cbxExportBinaries;
+		private System.Windows.Forms.CheckBox cbxSeparateBinaries;
 	}
 }

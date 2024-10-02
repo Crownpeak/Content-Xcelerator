@@ -49,7 +49,8 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 		#region Export Methods
 
 		public IList<LogEntry> Export(string location, int topLevelId, bool includeContent, bool includeLibrary, bool includeModels,
-			bool includeTemplates, bool includeBinaries, IEnumerable<CmsResource> resources, EventHandler<MigrationItemEventArgs> onItemProcessed = null)
+			bool includeTemplates, bool includeBinaries, bool separateBinaries, IEnumerable<CmsResource> resources, 
+			EventHandler<MigrationItemEventArgs> onItemProcessed = null)
 		{
 			var migrationSession = new MigrationSessionBuilder(_cms);
 
@@ -60,6 +61,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			migrationSession.ExportSession.IncludeModels = includeModels;
 			migrationSession.ExportSession.IncludeTemplates = includeTemplates;
 			migrationSession.ExportSession.IncludeBinaries = includeBinaries;
+			migrationSession.ExportSession.SeparateBinaries = separateBinaries;
 			migrationSession.ExportSession.ResourceCollection = resources;
 			
 			if (onItemProcessed != null) 

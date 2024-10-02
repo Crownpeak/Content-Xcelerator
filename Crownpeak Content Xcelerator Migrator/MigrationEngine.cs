@@ -246,7 +246,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				try
 				{
 					var fieldCollection = _api.Asset.Fields(asset.id);
-					GenerateXml(asset, fieldCollection, assetsXml, asset.id == exportSession.TargetFolder, exportSession.IncludeBinaries);
+					GenerateXml(asset, fieldCollection, assetsXml, asset.id == exportSession.TargetFolder, exportSession.IncludeBinaries, exportSession.SeparateBinaries, exportSession.FileLocation.Replace(".xml", "_files"));
 				}
 				catch (Exception ex)
 				{
@@ -262,7 +262,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 		}
 
-		private void GenerateXml(WorklistAsset asset, IEnumerable<KeyValuePair<string, string>> fieldCollection, XmlNode parent, bool isTop = false, bool includeBinaries = true)
+		private void GenerateXml(WorklistAsset asset, IEnumerable<KeyValuePair<string, string>> fieldCollection, XmlNode parent, bool isTop = false, bool includeBinaries = true, bool separateBinaries = false, string folder = "")
 		{
 			var xml = parent is XmlDocument ? parent as XmlDocument : parent.OwnerDocument;
 			var top = xml.SelectSingleNode("/assets");
@@ -573,7 +573,15 @@ namespace Crownpeak.ContentXcelerator.Migrator
 								{
 									if (_api.Asset.DownloadAttachmentBase64(attachment.PreviewUrl, out var attachmentContent))
 									{
-										field.AppendChild(xml.CreateElement("binaryContent")).InnerText = attachmentContent;
+										if (separateBinaries)
+										{
+											var binaryFilename = attachment.PreviewUrl.Substring(attachment.PreviewUrl.LastIndexOf("/") + 1);
+											if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+											File.WriteAllBytes(folder + "\\" + binaryFilename, Convert.FromBase64String(attachmentContent));
+											node.AppendChild(xml.CreateElement("binaryFile")).InnerText = binaryFilename;
+										}
+										else
+											field.AppendChild(xml.CreateElement("binaryContent")).InnerText = attachmentContent;
 									}
 								}
 							}
@@ -586,7 +594,16 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						string filename;
 						if (_api.Asset.DownloadBase64(asset.id, out filename, out data))
 						{
-							node.AppendChild(xml.CreateElement("binaryContent")).InnerText = data;
+							if (separateBinaries)
+							{
+								var extension = filename.Contains(".") ? filename.Substring(filename.LastIndexOf(".") + 1) : "bin";
+								var binaryFilename = asset.id + "." + extension;
+								if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+								File.WriteAllBytes(folder + "\\" + binaryFilename, Convert.FromBase64String(data));
+								node.AppendChild(xml.CreateElement("binaryFile")).InnerText = binaryFilename;
+							}
+							else
+								node.AppendChild(xml.CreateElement("binaryContent")).InnerText = data;
 						}
 					}
 
@@ -862,6 +879,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 			var results = new List<WorklistAsset>();
 
+			var binaryFolder = importSession.FileLocation.Replace(".xml", "_files");
 			if (assetNodeCollection != null)
 			{
 				foreach (XmlNode node in assetNodeCollection)
@@ -884,6 +902,11 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						var templateLanguage = GetNodeIntValue(node.SelectSingleNode("template_language"));
 						var templatePath = GetNodeStringValue(node.SelectSingleNode("template_path"));
 						var base64data = GetNodeStringValue(node.SelectSingleNode("binaryContent"));
+						var binaryFilename = GetNodeStringValue(node.SelectSingleNode("binaryFile"));
+						if (!string.IsNullOrWhiteSpace(binaryFilename))
+						{
+							base64data = Convert.ToBase64String(File.ReadAllBytes(binaryFolder + "\\" + binaryFilename));
+						}
 						var subType = GetNodeIntValue(node.SelectSingleNode("subType"));
 						if (!string.IsNullOrWhiteSpace(templatePath) && templateId == null)
 						{
@@ -930,7 +953,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 							}
 						}
 
-						var fields = GetFields(node);
+						var fields = GetFields(node, binaryFolder);
 
 						// TODO: validate we have everything we need
 
@@ -998,6 +1021,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 		private void RelinkAssets(XmlDocument xml, ImportSession importSession)
 		{
+			var binaryFolder = importSession.FileLocation.Replace(".xml", "_files");
 			var resourcesForRelinking = importSession.ResourceCollection.Where(r => r.OkToRelink
 				&& r.Asset != null
 				&& (r.AssetType.HasFlag(CmsAssetType.ContentAsset)
@@ -1050,7 +1074,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					}
 					else
 					{
-						var originalFields = GetFields(node);
+						var originalFields = GetFields(node, binaryFolder);
 						var fields = new Dictionary<string, string>();
 						var fieldsToDelete = new List<string>();
 						foreach (var field in originalFields)
@@ -1250,6 +1274,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 		private void RenameTmfRelationships(XmlDocument xml, ImportSession importSession)
 		{
+			var binaryFolder = importSession.FileLocation.Replace(".xml", "_files");
 			var tmfFolders = importSession.ResourceCollection.Where(r => r.Path.EndsWith("_tmf/relationships config", StringComparison.OrdinalIgnoreCase)
 				|| r.Path.EndsWith("_cdf/relationships config", StringComparison.OrdinalIgnoreCase));
 			if (!tmfFolders.Any()) return;
@@ -1263,7 +1288,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					var relationship = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null && r.AssetId == GetNodeIntValue(relationshipNode.SelectSingleNode("id")));
 					if (relationship != null)
 					{
-						var fields = GetFields(relationshipNode);
+						var fields = GetFields(relationshipNode, binaryFolder);
 						if (fields.ContainsKey("source_id") && fields.ContainsKey("destination_id"))
 						{
 							var newSource = importSession.ResourceCollection.FirstOrDefault(r => r.Asset != null && r.AssetId.ToString() == fields["source_id"]);
@@ -1372,7 +1397,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 			return node.InnerText;
 		}
 
-		private Dictionary<string, string> GetFields(XmlNode assetNode)
+		private Dictionary<string, string> GetFields(XmlNode assetNode, string folder)
 		{
 			var fields = new Dictionary<string, string>();
 
@@ -1384,6 +1409,11 @@ namespace Crownpeak.ContentXcelerator.Migrator
 					var name = GetNodeStringValue(fieldNode.SelectSingleNode("name"));
 					var value = GetNodeStringValue(fieldNode.SelectSingleNode("value"));
 					var binaryContent = GetNodeStringValue(fieldNode.SelectSingleNode("binaryContent"));
+					var binaryFilename = GetNodeStringValue(fieldNode.SelectSingleNode("binaryFile"));
+					if (!string.IsNullOrWhiteSpace(binaryFilename))
+					{
+						binaryContent = Convert.ToBase64String(File.ReadAllBytes(folder + "\\" + binaryFilename));
+					}
 					if (!string.IsNullOrWhiteSpace(name))
 					{
 						if (binaryContent != null) value = binaryContent;
