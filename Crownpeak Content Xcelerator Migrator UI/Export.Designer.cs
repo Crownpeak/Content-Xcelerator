@@ -77,6 +77,7 @@
 			this.label5 = new System.Windows.Forms.Label();
 			this.lblStatus = new System.Windows.Forms.Label();
 			this.progressBar1 = new System.Windows.Forms.ProgressBar();
+			this.cbxExportBinaries = new System.Windows.Forms.CheckBox();
 			this.tabWizard.SuspendLayout();
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
@@ -330,6 +331,7 @@
 			// 
 			// tabPage2
 			// 
+			this.tabPage2.Controls.Add(this.cbxExportBinaries);
 			this.tabPage2.Controls.Add(this.btnRefreshFolders);
 			this.tabPage2.Controls.Add(this.treeViewAssets);
 			this.tabPage2.Controls.Add(this.label8);
@@ -371,7 +373,7 @@
 			this.treeViewAssets.Name = "treeViewAssets";
 			this.treeViewAssets.SelectedImageIndex = 0;
 			this.treeViewAssets.Size = new System.Drawing.Size(496, 244);
-			this.treeViewAssets.TabIndex = 9;
+			this.treeViewAssets.TabIndex = 10;
 			this.treeViewAssets.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.treeViewAssets_AfterCheck);
 			this.treeViewAssets.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.treeViewAssets_AfterExpand);
 			// 
@@ -393,7 +395,7 @@
 			this.label8.Location = new System.Drawing.Point(6, 57);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(41, 13);
-			this.label8.TabIndex = 8;
+			this.label8.TabIndex = 9;
 			this.label8.Text = "Assets:";
 			// 
 			// cbxExportLibraries
@@ -607,6 +609,18 @@
 			this.progressBar1.TabIndex = 15;
 			this.progressBar1.Visible = false;
 			// 
+			// cbxExportBinaries
+			// 
+			this.cbxExportBinaries.AutoSize = true;
+			this.cbxExportBinaries.Checked = true;
+			this.cbxExportBinaries.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.cbxExportBinaries.Location = new System.Drawing.Point(350, 33);
+			this.cbxExportBinaries.Name = "cbxExportBinaries";
+			this.cbxExportBinaries.Size = new System.Drawing.Size(63, 17);
+			this.cbxExportBinaries.TabIndex = 8;
+			this.cbxExportBinaries.Text = "Binaries";
+			this.cbxExportBinaries.UseVisualStyleBackColor = true;
+			// 
 			// Export
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -682,5 +696,6 @@
 		private System.Windows.Forms.RadioButton rbWcoNo;
 		private System.Windows.Forms.RadioButton rbWcoYes;
 		private System.Windows.Forms.Label label12;
+		private System.Windows.Forms.CheckBox cbxExportBinaries;
 	}
 }

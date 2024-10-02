@@ -259,7 +259,7 @@ namespace Crownpeak.ContentXcelerator.Migrator.UI
 			progressBar1.Visible = true;
 			progressBar1.Value = 0;
 			progressBar1.Maximum = 1;
-			var task = Task.Run(() => _migrationEngine.Export(txtExportTo.Text, ((CmsResource)treeViewAssets.Nodes[0].Tag).AssetId, cbxExportAssets.Checked, cbxExportLibraries.Checked, cbxExportModels.Checked, cbxExportTemplates.Checked, resources, OnItemProcessed));
+			var task = Task.Run(() => _migrationEngine.Export(txtExportTo.Text, ((CmsResource)treeViewAssets.Nodes[0].Tag).AssetId, cbxExportAssets.Checked, cbxExportLibraries.Checked, cbxExportModels.Checked, cbxExportTemplates.Checked, cbxExportBinaries.Checked, resources, OnItemProcessed));
 			await task;
 			_lastLog = task.Result;
 

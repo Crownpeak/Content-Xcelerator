@@ -246,7 +246,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 				try
 				{
 					var fieldCollection = _api.Asset.Fields(asset.id);
-					GenerateXml(asset, fieldCollection, assetsXml, asset.id == exportSession.TargetFolder);
+					GenerateXml(asset, fieldCollection, assetsXml, asset.id == exportSession.TargetFolder, exportSession.IncludeBinaries);
 				}
 				catch (Exception ex)
 				{
@@ -262,7 +262,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 
 		}
 
-		private void GenerateXml(WorklistAsset asset, IEnumerable<KeyValuePair<string, string>> fieldCollection, XmlNode parent, bool isTop = false)
+		private void GenerateXml(WorklistAsset asset, IEnumerable<KeyValuePair<string, string>> fieldCollection, XmlNode parent, bool isTop = false, bool includeBinaries = true)
 		{
 			var xml = parent is XmlDocument ? parent as XmlDocument : parent.OwnerDocument;
 			var top = xml.SelectSingleNode("/assets");
@@ -459,7 +459,10 @@ namespace Crownpeak.ContentXcelerator.Migrator
 												{
 													var imageNode = targetGroupNode.AppendChild(xml.CreateElement("image"));
 													imageNode.AppendChild(xml.CreateElement("mimeType")).InnerText = imageType;
-													imageNode.AppendChild(xml.CreateElement("binaryContent")).InnerText = Convert.ToBase64String(imageBytes);
+													if (includeBinaries)
+													{
+														imageNode.AppendChild(xml.CreateElement("binaryContent")).InnerText = Convert.ToBase64String(imageBytes);
+													}
 												}
 												if (targetGroup.Rules.Length > 0)
 												{
@@ -563,7 +566,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 								_api.AssetProperties.GetAttachments(asset.id, out attachments);
 							}
 
-							if (attachments != null && attachments.Any())
+							if (includeBinaries && attachments != null && attachments.Any())
 							{
 								var attachment = attachments.FirstOrDefault(a => a.PreviewUrl == kvp.Value);
 								if (attachment != null)
@@ -577,7 +580,7 @@ namespace Crownpeak.ContentXcelerator.Migrator
 						}
 					}
 
-					if (GetAssetType(asset, node.OwnerDocument).HasFlag(CmsAssetType.DigitalAsset))
+					if (includeBinaries && GetAssetType(asset, node.OwnerDocument).HasFlag(CmsAssetType.DigitalAsset))
 					{
 						string data;
 						string filename;
